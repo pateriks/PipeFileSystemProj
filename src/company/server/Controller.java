@@ -116,6 +116,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         }
         acc.getUser().setPassword(pass);
         db.commit();
+        server.dispInfo();
         return true;
     }
 

@@ -1,5 +1,6 @@
 package company.server;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -166,6 +167,14 @@ public class PipeServer {
     }
     protected Account getAccount(String user){
         return activeAcs.get(keys.get(user));
+    }
+    protected void dispInfo(){
+        activeAcs.forEach(new BiConsumer<Integer, Account>() {
+            @Override
+            public void accept(Integer mac, Account acc) {
+                System.out.println("MAC: " + mac + " Account " + acc.toString());
+            }
+        });
     }
 
     public static void main(String args[]) throws Exception {
