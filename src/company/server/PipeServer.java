@@ -12,6 +12,7 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -21,6 +22,8 @@ public class PipeServer {
     private static final String ROT = "root/";
 
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();
+    private HashMap<Integer, Account> activeAcs = new HashMap<>();
+    private HashMap <String, Integer> keys = new HashMap<>();
 
     public String getMessage() {
         return MESSAGE;
@@ -157,9 +160,17 @@ public class PipeServer {
         }
         return null;
     }
+    protected void addActiveAcc(int key, Account acc){
+        activeAcs.put(key, acc);
+        keys.put(acc.getUser().name, key);
+    }
+    protected Account getAccount(String user){
+        return activeAcs.get(keys.get(user));
+    }
 
     public static void main(String args[]) throws Exception {
         Controller controller = new Controller();
+        controller.init(new PipeServer());
         /////////////////////////////////////////
         System.out.println("Server starting...");
         /////////////////////////////////////////
@@ -170,9 +181,9 @@ public class PipeServer {
             ///////////////////////////////////////////////////
         } catch (RemoteException e) {
             //do nothing, error means registry already exists
-            /////////////////////////////////////
-            System.out.println("Could not bind");
-            /////////////////////////////////////
+            ///////////////////////////////////////////////
+            System.out.println("Could not create registry");
+            ///////////////////////////////////////////////
         }
         //Bind controller instance to the name "PipeController"
         try {

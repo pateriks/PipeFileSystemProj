@@ -13,7 +13,9 @@ public interface ControllerIntf extends Remote {
     boolean creat(String path) throws RemoteException;
     boolean creat() throws RemoteException;
     boolean update(AccountIntf acc, String pass) throws RemoteException;
-    int login(String s) throws RemoteException;
+    boolean update(String user, String pass) throws RemoteException;
+    int login(String s, int mac) throws RemoteException;
+    AccountIntf verifyUser(String s, String pass) throws RemoteException;
     AccountIntf open(AccountIntf acc, String fullPath) throws RemoteException;
     boolean close(AccountIntf acc) throws RemoteException;
     boolean write(AccountIntf acc, String s) throws RemoteException;

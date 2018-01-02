@@ -2,8 +2,9 @@ package client;
 
 import company.common.AccountIntf;
 import company.common.ControllerIntf;
+import company.server.Account;
 
-import java.net.MalformedURLException;
+import java.net.*;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -116,21 +117,41 @@ public class ServerTask extends RecursiveTask {
 
     private synchronized void login() {
         try {
-            int response = server.login(sQuery.split(" ")[1]);
+
+            InetAddress ip = null;
+            try {
+                ip = InetAddress.getLocalHost();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+            NetworkInterface network = null;
+            try {
+                network = NetworkInterface.getByInetAddress(ip);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            byte [] hw = new byte[0];
+            try {
+                hw = network.getHardwareAddress();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            int secret = 0;
+            for(Byte b : hw) {
+                secret += b.intValue();
+            }
+            out.println("" + secret);
+
+            String user = sQuery.split(" ")[1];
+            int response = server.login(user, secret);
+
             switch (response){
                 case 1:
-                    try {
-                        acc = (AccountIntf) Naming.lookup("//".concat(HOST).concat("/Account"));
-                    } catch (NotBoundException e) {
-                        e.printStackTrace();
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    }
-                    out.println("welcome " + acc.getName());
+                    out.println("welcome " + user);
                     out.println("please enter your password");
                     while(true) {
                         String password = new Scanner(System.in).nextLine();
-                        if (acc.verifyUser(password)) {
+                        if ((acc = server.verifyUser(user, password)) != null) {
                             Command.user = acc.getName();
                             break;
                         } else {
@@ -139,17 +160,11 @@ public class ServerTask extends RecursiveTask {
                     }
                     break;
                 case 0:
-                    try {
-                        acc = (AccountIntf) Naming.lookup("//".concat(HOST).concat("/Account"));
-                    } catch (NotBoundException e) {
-                        e.printStackTrace();
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    }
-                    out.println("welome new user " + acc.getName());
+                    out.println("welome new user " + user);
                     out.println("enter a password to use ");
                     String password = new Scanner(System.in).nextLine();
-                    server.update(acc, password);
+                    server.update(user, password);
+                    acc = server.verifyUser(user, password);
                     Command.user = acc.getName();
                     break;
                 case 2:

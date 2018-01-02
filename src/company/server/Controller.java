@@ -16,12 +16,16 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     //Database object
     DataDAO db = new DataDAO();
     //Core object
-    PipeServer server = new PipeServer();
+    PipeServer server = null;
     //Host ip
 
     //Non argument construct used outside of package
     protected Controller() throws RemoteException {
         super();
+    }
+    //Vem är det som har kontroll
+    protected void init(PipeServer server){
+        this.server = server;
     }
 
     @Override
@@ -66,7 +70,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     }
 
     @Override
-    public Account open(AccountIntf accountIntf, String path) throws RemoteException {
+    public AccountIntf open(AccountIntf accountIntf, String path) throws RemoteException {
         Account acc = null;
         Item item = new Item(path);
         db.persistItem(item);
@@ -95,30 +99,38 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     }
 
     @Override
-    public boolean update(AccountIntf acc, String pass){
+    public boolean update(String user, String pass){
         Account account = null;
+        account = server.getAccount(user);
+        account.getUser().setPassword(pass);
+        return true;
+    }
+
+    @Override
+    public boolean update(AccountIntf user, String pass){
+        Account acc = null;
         try {
-            account = db.findAccountByName(acc.getId(), false);
+            acc = db.findAccountByName(user.getId(), false);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        account.getUser().setPassword(pass);
+        acc.getUser().setPassword(pass);
         db.commit();
         return true;
     }
 
     @Override
-    public int login(String s) throws RemoteException {
+    public int login(String s, int mac) throws RemoteException {
         List accounts = db.findAccounts(s, false);
         System.out.println(Arrays.toString(accounts.toArray()));
         try{
             if (accounts.isEmpty()){
                 Account acc = new Account(s);
-                Naming.rebind("//localhost/Account", acc);
+                server.addActiveAcc(mac, acc);
                 db.persistAccount(acc);
                 return 0;
             }else if(accounts.size() == 1){
-                Naming.rebind("//localhost/Account", (Account) accounts.get(0));
+                server.addActiveAcc(mac, (Account) accounts.get(0));
                 db.commit();
                 return 1;
             }else{
@@ -130,6 +142,15 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    @Override
+    public AccountIntf verifyUser(String user, String pass) throws RemoteException {
+        Account loginAcc = server.getAccount(user);
+        if(loginAcc.verifyUser(pass)){
+            return (AccountIntf) loginAcc;
+        }
+        return null;
     }
 
     @Override

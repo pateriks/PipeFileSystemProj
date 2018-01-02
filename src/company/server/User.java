@@ -24,9 +24,10 @@ public class User {
     public User (){
     }
     public User (String s){
-        this(Integer.toString(new Random().nextInt()), s, "", false);
+        this(Integer.toString(new Random().nextInt()+4), s, "", false);
     }
-    public User (String username, String name, String password, Boolean admin){
+    //Bara åtkomlig i paketet eftersom vi använder username för att säkerhetsställa användare
+    protected User (String username, String name, String password, Boolean admin){
         this.username = username;
         this.name = name;
         this.password = password;
