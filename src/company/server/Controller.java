@@ -2,10 +2,6 @@ package company.server;
 
 import company.common.AccountIntf;
 import company.common.ControllerIntf;
-import company.server.Account;
-import company.server.DataDAO;
-import company.server.Item;
-import company.server.PipeServer;
 
 import org.hibernate.collection.internal.PersistentSet;
 
@@ -53,7 +49,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     @Override
     public boolean delete(AccountIntf acc){
         try {
-            server.multiDelete(db.findAccountByName(acc.getUserName(), true).getUser());
+            server.multiDelete(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -71,7 +67,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         Account acc = null;
         Item item = new Item(path);
         db.persistItem(item);
-        acc = db.findAccountByName(accountIntf.getUserName(), false);
+        acc = db.findAccountByName(accountIntf.getId(), false);
         server.open(path, acc.getUser());
         Set h = acc.getItem();
         h.add(item);
@@ -87,7 +83,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     @Override
     public boolean update(AccountIntf account) throws RemoteException {
         try {
-            Account upd = db.findAccountByName(account.getUserName(), false);
+            Account upd = db.findAccountByName(account.getId(), false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -99,7 +95,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     public boolean update(AccountIntf acc, String pass){
         Account account = null;
         try {
-            account = db.findAccountByName(acc.getUserName(), false);
+            account = db.findAccountByName(acc.getId(), false);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -136,7 +132,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     @Override
     public boolean write(AccountIntf acc, String input){
         try {
-            server.multiWrite(db.findAccountByName(acc.getUserName(), true).getUser(), input);
+            server.multiWrite(db.findAccountByName(acc.getId(), true).getUser(), input);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -148,7 +144,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         Object[] paths = null;
         try {
             if(acc != null) {
-                Account account = db.findAccountByName(acc.getUserName(), true);
+                Account account = db.findAccountByName(acc.getId(), true);
                 if(account != null){
                     PersistentSet set = (PersistentSet) account.getItem();
                     paths = set.toArray();
@@ -169,7 +165,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     @Override
     public boolean logout(AccountIntf acc){
         try {
-            server.multiClose(db.findAccountByName(acc.getUserName(), true).getUser());
+            server.multiClose(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -178,7 +174,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
 
     public boolean close(AccountIntf acc){
         try {
-            server.multiClose(db.findAccountByName(acc.getUserName(), true).getUser());
+            server.multiClose(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();
         }

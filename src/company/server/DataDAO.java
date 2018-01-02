@@ -13,8 +13,8 @@ public class DataDAO {
         emf = Persistence.createEntityManagerFactory("Pipe");
     }
     //Searchers
-    public Account findAccountByName(String user, boolean bool) {
-        if (user == null) {
+    public Account findAccountByName(long user, boolean bool) {
+        if (user == 0) {
             return null;
         }
         try {

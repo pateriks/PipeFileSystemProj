@@ -14,6 +14,9 @@ import java.util.Scanner;
 import java.util.concurrent.RecursiveTask;
 
 public class ServerTask extends RecursiveTask {
+    private final String HOST = "192.168.0.16";
+
+
     private enum Tasks {
         cd("cd - Change Directory (cd + a directory from current directory)"),
         ls("ls - List (ls to list items in current directory flags: -r)"),
@@ -45,7 +48,7 @@ public class ServerTask extends RecursiveTask {
         sQuery = s;
         this.out = out;
         try {
-            server = (ControllerIntf) Naming.lookup("//localhost/PipeController");
+            server = (ControllerIntf) Naming.lookup("//".concat(HOST).concat("/PipeController"));
         } catch (NotBoundException e) {
             e.printStackTrace();
         } catch (MalformedURLException e) {
@@ -121,7 +124,7 @@ public class ServerTask extends RecursiveTask {
             switch (response){
                 case 1:
                     try {
-                        acc = (AccountIntf) Naming.lookup("//localhost/Account");
+                        acc = (AccountIntf) Naming.lookup("//".concat(HOST).concat("/Account"));
                     } catch (NotBoundException e) {
                         e.printStackTrace();
                     } catch (MalformedURLException e) {
@@ -141,7 +144,7 @@ public class ServerTask extends RecursiveTask {
                     break;
                 case 0:
                     try {
-                        acc = (AccountIntf) Naming.lookup("//localhost/Account");
+                        acc = (AccountIntf) Naming.lookup("//".concat(HOST).concat("/Account"));
                     } catch (NotBoundException e) {
                         e.printStackTrace();
                     } catch (MalformedURLException e) {
@@ -218,7 +221,7 @@ public class ServerTask extends RecursiveTask {
 
     private void logout(){
         try {
-            Naming.unbind("//localhost/Account");
+            Naming.unbind("//".concat(HOST).concat("/Account"));
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (NotBoundException e) {

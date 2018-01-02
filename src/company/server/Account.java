@@ -12,11 +12,11 @@ import java.util.Set;
 @NamedQueries({
     @NamedQuery(
         name = "findAccountByName",
-        query = "SELECT acct FROM Account acct WHERE acct.user.username LIKE :userName"
+        query = "SELECT acct FROM Account acct WHERE acct.user.userId LIKE :userName"
     ),
     @NamedQuery(
             name = "findAccounts",
-            query = "SELECT acct FROM Account acct WHERE acct.user.name LIKE :userName"
+            query = "SELECT acct FROM Account acct WHERE acct.accountId LIKE :userName"
     )
 })
 
@@ -24,7 +24,7 @@ import java.util.Set;
 public class Account extends UnicastRemoteObject implements AccountIntf {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long userId;
+    private long accountId;
 
     @OneToOne@MapsId
     private User user;
@@ -51,6 +51,11 @@ public class Account extends UnicastRemoteObject implements AccountIntf {
     @Override
     public String getUserName() throws RemoteException {
         return user.username;
+    }
+
+    @Override
+    public long getId() throws RemoteException {
+        return accountId;
     }
 
     @Override

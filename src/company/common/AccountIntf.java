@@ -10,4 +10,5 @@ public interface AccountIntf extends Remote{
     void getPassword(String email) throws RemoteException;
     boolean hasUser() throws RemoteException;
     void setUser(String password) throws RemoteException;
+    long getId() throws RemoteException;
 }
