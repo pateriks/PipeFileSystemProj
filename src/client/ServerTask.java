@@ -217,7 +217,9 @@ public class ServerTask extends RecursiveTask {
 
     private void logout(){
         try {
-            server.logout(RmiClient.acc);
+            if(RmiClient.acc != null) {
+                server.logout(RmiClient.acc);
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
         }

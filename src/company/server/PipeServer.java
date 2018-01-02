@@ -27,19 +27,21 @@ public class PipeServer {
     }
 
     protected void multiClose(User user){
-        if(rootMap.containsKey(user.username)) {
-            rootMap.get(user.username).forEach(new BiConsumer<String, OutputStream>() {
-                @Override
-                public void accept(String s, OutputStream outputStream) {
-                    try {
-                        if (outputStream != null) {
-                            outputStream.close();
+        if(user != null) {
+            if (rootMap.containsKey(user.username)) {
+                rootMap.get(user.username).forEach(new BiConsumer<String, OutputStream>() {
+                    @Override
+                    public void accept(String s, OutputStream outputStream) {
+                        try {
+                            if (outputStream != null) {
+                                outputStream.close();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
-                }
-            });
+                });
+            }
         }
     }
 
