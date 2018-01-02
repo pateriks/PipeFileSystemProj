@@ -5,7 +5,9 @@ import company.common.ControllerIntf;
 
 import org.hibernate.collection.internal.PersistentSet;
 
+import java.net.MalformedURLException;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -15,6 +17,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     DataDAO db = new DataDAO();
     //Core object
     PipeServer server = new PipeServer();
+    //Host ip
 
     //Non argument construct used outside of package
     protected Controller() throws RemoteException {
@@ -165,6 +168,13 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     @Override
     public boolean logout(AccountIntf acc){
         try {
+            try {
+                Naming.unbind("//".concat("localhost").concat("/Account"));
+            } catch (NotBoundException e) {
+                e.printStackTrace();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
             server.multiClose(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();

@@ -217,15 +217,6 @@ public class ServerTask extends RecursiveTask {
 
     private void logout(){
         try {
-            Naming.unbind("//".concat(HOST).concat("/Account"));
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (NotBoundException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        try {
             server.logout(RmiClient.acc);
         } catch (RemoteException e) {
             e.printStackTrace();
