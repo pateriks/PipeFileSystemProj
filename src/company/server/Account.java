@@ -16,7 +16,7 @@ import java.util.Set;
     ),
     @NamedQuery(
             name = "findAccounts",
-            query = "SELECT acct FROM Account acct WHERE acct.user.username LIKE :userName"
+            query = "SELECT acct FROM Account acct WHERE acct.user.name LIKE :userName"
     )
 })
 
