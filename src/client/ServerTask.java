@@ -59,53 +59,49 @@ public class ServerTask extends RecursiveTask {
     }
 
     public void add(String s) throws Exception{
-        try {
-            if(Command.lockedMode){
-                switch (s) {
-                    case "usr":
-                        login();
-                        login = "welcome";
-                        break;
-                    case "help":
-                        help();
-                        break;
-                    default:
-                        out.println(login);
-                }
-            }else{
-                switch (s) {
-                    case "usr":
-                        login();
-                        break;
-                    case "help":
-                        help();
-                        break;
-                    case "creat":
-                        creat();
-                        break;
-                    case "open":
-                        open();
-                        break;
-                    case "close":
-                        close();
-                        break;
-                    case "write":
-                        write();
-                        break;
-                    case "ls":
-                        list();
-                        break;
-                    case "lot":
-                        logout();
-                        break;
-                    case "rem":
-                        delete();
-                    default:
-                        args(s);
-                }
+        if(Command.lockedMode){
+            switch (s) {
+                case "usr":
+                    login();
+                    login = "welcome";
+                    break;
+                case "help":
+                    help();
+                    break;
+                default:
+                    out.println(login);
             }
-        }catch (IllegalArgumentException e){
-            out.println("Unhandled argument");
+        }else{
+            switch (s) {
+                case "usr":
+                    login();
+                    break;
+                case "help":
+                    help();
+                    break;
+                case "creat":
+                    creat();
+                    break;
+                case "open":
+                    open();
+                    break;
+                case "close":
+                    close();
+                    break;
+                case "write":
+                    write();
+                    break;
+                case "ls":
+                    list();
+                    break;
+                case "lot":
+                    logout();
+                    break;
+                case "rem":
+                    delete();
+                default:
+                    args(s);
+            }
         }
     }
 
