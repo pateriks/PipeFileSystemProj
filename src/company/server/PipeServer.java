@@ -27,7 +27,7 @@ public class PipeServer {
     }
 
     protected void multiClose(User user){
-        rootMap.get(user).forEach(new BiConsumer<String, OutputStream>() {
+        rootMap.get(user.username).forEach(new BiConsumer<String, OutputStream>() {
             @Override
             public void accept(String s, OutputStream outputStream) {
                 try {
