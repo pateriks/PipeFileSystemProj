@@ -5,13 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataDAO {
+    //FINAL INITILATIONS
     private final EntityManagerFactory emf;
     private final ThreadLocal<EntityManager> threadLEM = new ThreadLocal<>();
-
+    //Construct
     public DataDAO() {
         emf = Persistence.createEntityManagerFactory("Pipe");
     }
-
+    //Searchers
     public Account findAccountByName(String user, boolean bool) {
         if (user == null) {
             return null;
@@ -62,11 +63,11 @@ public class DataDAO {
             }
         }
     }
-
+    //Used by user after search
     public void commit() {
         commitTransaction();
     }
-
+    //New user to persist
     public void persistUser(User user){
         try {
             EntityManager em = beginTransaction();
@@ -75,7 +76,7 @@ public class DataDAO {
             commitTransaction();
         }
     }
-
+    //New item to persist
     public void persistItem(Item item){
         try {
             EntityManager em = beginTransaction();
@@ -84,7 +85,7 @@ public class DataDAO {
             commitTransaction();
         }
     }
-
+    //New account to persist
     public void persistAccount(Account acc){
         try {
             EntityManager em = beginTransaction();
@@ -93,7 +94,7 @@ public class DataDAO {
             commitTransaction();
         }
     }
-
+    //Private methods
     private EntityManager beginTransaction() {
         EntityManager em = emf.createEntityManager();
         threadLEM.set(em);

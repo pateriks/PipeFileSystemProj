@@ -5,7 +5,6 @@ import java.util.Random;
 
 @Entity(name = "User")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long userId;

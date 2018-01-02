@@ -169,7 +169,7 @@ public class ServerTask extends RecursiveTask {
 
     private void delete(){
         try {
-            server.delete();
+            server.delete(RmiClient.acc);
         } catch (RemoteException e) {
             e.printStackTrace();
         }

@@ -1,30 +1,28 @@
-package company.controller;
+package company.server;
 
-import client.RmiClient;
 import company.common.AccountIntf;
 import company.common.ControllerIntf;
 import company.server.Account;
 import company.server.DataDAO;
 import company.server.Item;
 import company.server.PipeServer;
+
 import org.hibernate.collection.internal.PersistentSet;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 public class Controller  extends UnicastRemoteObject implements ControllerIntf {
+    //Database object
     DataDAO db = new DataDAO();
+    //Core object
     PipeServer server = new PipeServer();
-    String wDir = "";
-    HashMap<String, OutputStream> openFiles = new HashMap<>();
 
-    public Controller() throws RemoteException {
-        super();    // required to avoid the 'rmic' step, see below
+    //Non argument construct used outside of package
+    protected Controller() throws RemoteException {
+        super();
     }
 
     @Override
@@ -44,23 +42,21 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
 
     @Override
     public boolean creat() throws RemoteException {
-        return server.creat(wDir);
+        return server.creat("test");
     }
 
     @Override
     public boolean creat(String path) throws RemoteException {
         return server.creat(path);
-
     }
 
     @Override
-    public boolean delete(){
-        openFiles.forEach(new BiConsumer<String, OutputStream>() {
-            @Override
-            public void accept(String s, OutputStream outputStream) {
-                server.delete(s);
-            }
-        });
+    public boolean delete(AccountIntf acc){
+        try {
+            server.multiDelete(db.findAccountByName(acc.getUserName(), true).getUser());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         return true;
     }
 
@@ -88,15 +84,6 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         return acc;
     }
 
-    public boolean close(AccountIntf acc){
-        try {
-            server.multiClose(db.findAccountByName(acc.getUserName(), true).getUser());
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
-
     @Override
     public boolean update(AccountIntf account) throws RemoteException {
         try {
@@ -120,8 +107,8 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         db.commit();
         return true;
     }
-    @Override
 
+    @Override
     public int login(String s) throws RemoteException {
         List accounts = db.findAccounts(s, false);
         System.out.println(Arrays.toString(accounts.toArray()));
@@ -156,19 +143,6 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         return true;
     }
 
-    //ADMIN
-    @Override
-    public String [] list (){
-        java.lang.Object[] paths = server.list();
-        String[] ret = new String[paths.length];
-        int i = 0;
-        for (java.lang.Object p : paths){
-            ret[i] = p.toString();
-            i++;
-        }
-        return ret;
-    }
-
     @Override
     public String [] list (AccountIntf acc){
         Object[] paths = null;
@@ -192,6 +166,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         return ret;
     }
 
+    @Override
     public boolean logout(AccountIntf acc){
         try {
             server.multiClose(db.findAccountByName(acc.getUserName(), true).getUser());
@@ -199,5 +174,26 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
             e.printStackTrace();
         }
         return true;
+    }
+
+    public boolean close(AccountIntf acc){
+        try {
+            server.multiClose(db.findAccountByName(acc.getUserName(), true).getUser());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    //Admin - Usage
+    private String [] list (){
+        java.lang.Object[] paths = server.list();
+        String[] ret = new String[paths.length];
+        int i = 0;
+        for (java.lang.Object p : paths){
+            ret[i] = p.toString();
+            i++;
+        }
+        return ret;
     }
 }

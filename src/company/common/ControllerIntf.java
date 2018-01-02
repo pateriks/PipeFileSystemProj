@@ -17,9 +17,8 @@ public interface ControllerIntf extends Remote {
     AccountIntf open(AccountIntf acc, String fullPath) throws RemoteException;
     boolean close(AccountIntf acc) throws RemoteException;
     boolean write(AccountIntf acc, String s) throws RemoteException;
-    String[] list() throws RemoteException;
     String[] list(AccountIntf acc) throws RemoteException;
-    boolean delete() throws RemoteException;
+    boolean delete(AccountIntf acc) throws RemoteException;
     boolean delete(String path) throws RemoteException;
     boolean logout(AccountIntf acc) throws RemoteException;
 }

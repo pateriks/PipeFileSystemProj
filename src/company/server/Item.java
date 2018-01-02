@@ -9,7 +9,6 @@ import javax.persistence.*;
 })
 @Entity(name = "Item")
 public class Item {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long itemId;

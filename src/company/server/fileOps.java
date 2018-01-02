@@ -11,16 +11,6 @@ public class fileOps {
 
     public fileOps() {
     }
-    public static boolean newDir(String name) {
-        try {
-            Path newDir = Files.createDirectory(Paths.get(name));
-            return true;
-        } catch (FileAlreadyExistsException e) {
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
-    }
     public static boolean removeFile(){
         return false;
     }
