@@ -215,6 +215,7 @@ public class ServerTask extends RecursiveTask {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+        out.println(path);
         return;
     }
 

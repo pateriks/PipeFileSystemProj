@@ -100,11 +100,11 @@ public class TCP {
                                 //task.cancel(true);
                                 break;
                             }
-                            else if (task.isDone()) {
+                            //else if (task.isDone()) {
                                 send(key, getMsg);
-                            }else{
-                                send(key, "resend");
-                            }
+                            //}else{
+                            //    send(key, "resend");
+                            //}
                         }
                     }
                 }catch(Exception e) {

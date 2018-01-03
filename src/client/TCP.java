@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class TCP implements Runnable{
-    LinkedList<String> que = new LinkedList<>();
+    protected LinkedList<String> que = new LinkedList<>();
     SocketChannel sC;
     Selector selector;
     String last = "null";
@@ -25,6 +25,7 @@ public class TCP implements Runnable{
 
     protected void start (){
         channelSetup();
+        que.push("hello");
         new Thread(this).start();
     }
 
