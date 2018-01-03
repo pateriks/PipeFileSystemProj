@@ -23,4 +23,5 @@ public interface ControllerIntf extends Remote {
     boolean delete(AccountIntf acc) throws RemoteException;
     boolean delete(String path) throws RemoteException;
     boolean logout(AccountIntf acc) throws RemoteException;
+    boolean view(String path) throws RemoteException;
 }

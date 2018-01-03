@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 public class PipeServer {
 
     public static final String MESSAGE = "Hello I am Pipe, how can I help you?";
-    private static final String ROT = "root/";
+    protected static final String ROT = "root/";
     private static final String HOST = "192.168.0.16";
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();
     private HashMap<Integer, Account> activeAcs = new HashMap<>();
@@ -176,7 +176,15 @@ public class PipeServer {
             }
         });
     }
-
+    protected void view(String path){
+        TCP send = new TCP();
+        try {
+            send.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        send.que.push(path);
+    }
     public static void main(String args[]) throws Exception {
         Controller controller = new Controller();
         controller.init(new PipeServer());

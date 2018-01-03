@@ -5,6 +5,7 @@ import company.common.ControllerIntf;
 import company.server.Account;
 import company.server.PipeServer;
 
+import java.io.PrintWriter;
 import java.net.*;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -48,7 +49,9 @@ public class ServerTask extends RecursiveTask {
     AccountIntf acc;
     Boolean bufferedWrite = false;
     boolean cNew = false;
+    boolean graphics = false;
     String login = "please login";
+    TCP connection;
 
     ServerTask(SafeStandardOut out, Condition c){
         id = new Random().nextInt(5);
@@ -112,6 +115,9 @@ public class ServerTask extends RecursiveTask {
                 case "rem":
                     delete();
                     return a;
+                case "vi":
+                    view(a);
+                    return null;
                 default:
                     args(c);
                     if(a.equals("")){
@@ -199,6 +205,19 @@ public class ServerTask extends RecursiveTask {
         //TODO: Implement
     }
 
+    private void view(String path){
+        connection = new TCP();
+        connection.que.push(path);
+        connection.start();
+        graphics = false;
+        try {
+            server.view(path);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return;
+    }
+
     private void delete(){
         try {
             server.delete(RmiClient.acc);
@@ -259,8 +278,21 @@ public class ServerTask extends RecursiveTask {
         Command.lockedMode = true;
     }
 
+    private void render(){
+        int HEIGHT = (int) Math.pow(2, 4);
+        int WIDTH = (int) Math.pow(2, 7);
+        out.println("");
+        for(int j = 0; j < HEIGHT; j++){
+            for(int i = 0; i < WIDTH; i++){
+                out.print("x");
+            }
+            out.println("");
+        }
+    }
+
     protected Object compute(){
         //TODO: Long-running async tasks can go here
+        Object ret = null;
         if(bufferedWrite) {
             /*try {
                 condition.await(1000, TimeUnit.MILLISECONDS);
@@ -278,8 +310,28 @@ public class ServerTask extends RecursiveTask {
             bufferedWrite = false;
         }
         if(Command.lockedMode) {
-            return acc;
+            ret = acc;
         }
-        return null;
+        if(graphics){
+            render();
+        }
+        if(connection != null){
+            ret = getString(connection);
+
+        }
+        return ret;
+    }
+    private static String getString(TCP connection){
+        String ret = null;
+        try {
+            while (connection.open()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(connection.read());
+                ret = sb.toString();
+            }
+        }catch (NullPointerException e){
+            getString(connection);
+        }
+        return ret;
     }
 }

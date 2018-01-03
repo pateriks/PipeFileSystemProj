@@ -201,6 +201,12 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         return true;
     }
 
+    @Override
+    public boolean view(String path) throws RemoteException {
+        server.view(path);
+        return false;
+    }
+
     public boolean close(AccountIntf acc){
         try {
             server.multiClose(db.findAccountByName(acc.getId(), true).getUser());
