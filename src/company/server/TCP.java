@@ -35,9 +35,9 @@ public class TCP {
             path = "null";
         }
         ForkJoinTask<Integer> task = ForkJoinPool.commonPool().submit(new HandlerTCP((SocketChannel)key.channel(), lookup, path), 1);
-        if(!s.equals("resend")) {
-            lookup.put(key.channel().hashCode(), task);
-        }
+        //if(!s.equals("resend")) {
+        //    lookup.put(key.channel().hashCode(), task);
+        //}
 
     }
     private String receive(SelectionKey key) throws IOException {
@@ -93,7 +93,7 @@ public class TCP {
                             startHandler(key);
                         } else if (key.isReadable()) {
                             String getMsg = receive(key);
-                            ForkJoinTask<Integer> task = lookup.get(key.channel().hashCode());
+                            //ForkJoinTask<Integer> task = lookup.get(key.channel().hashCode());
                             if(getMsg.equals("bye")){
                                 key.channel().close();
                                 run = false;
