@@ -3,6 +3,7 @@ package client;
 import company.common.AccountIntf;
 import company.common.ControllerIntf;
 import company.server.Account;
+import company.server.PipeServer;
 
 import java.net.*;
 import java.rmi.Naming;
@@ -13,6 +14,10 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ServerTask extends RecursiveTask {
     private final String HOST = "192.168.0.16";
@@ -36,17 +41,18 @@ public class ServerTask extends RecursiveTask {
     }
 
     int id;
-    String sQuery;
+    Condition condition;
     LinkedList<String> handle= new LinkedList<>();
     SafeStandardOut out;
     ControllerIntf server;
     AccountIntf acc;
     Boolean bufferedWrite = false;
+    boolean cNew = false;
     String login = "please login";
 
-    ServerTask(String s, SafeStandardOut out){
+    ServerTask(SafeStandardOut out, Condition c){
         id = new Random().nextInt(5);
-        sQuery = s;
+        condition = c;
         this.out = out;
         try {
             server = (ControllerIntf) Naming.lookup("//".concat(HOST).concat("/PipeController"));
@@ -59,51 +65,62 @@ public class ServerTask extends RecursiveTask {
         }
     }
 
-    public void add(String s) throws Exception{
+    public String add(String c, String a) throws Exception{
         if(Command.lockedMode){
-            switch (s) {
+            switch (c) {
                 case "usr":
-                    login();
+                    login(a);
                     login = "welcome";
-                    break;
+                    return a;
                 case "help":
                     help();
-                    break;
+                    return a;
+                case "new":
+                    cNew = true;
+                    return a;
                 default:
+                    args(c);
                     out.println(login);
+                    if(a.equals("")){
+                        return null;
+                    }
+                    args(a);
             }
         }else{
-            switch (s) {
-                case "usr":
-                    login();
-                    break;
+            switch (c) {
                 case "help":
                     help();
-                    break;
+                    return a;
                 case "creat":
                     creat();
-                    break;
+                    return a;
                 case "open":
-                    open();
-                    break;
+                    open(a);
+                    return a;
                 case "close":
                     close();
-                    break;
+                    return a;
                 case "write":
                     write();
-                    break;
+                    return a;
                 case "ls":
                     list();
-                    break;
+                    return a;
                 case "lot":
                     logout();
-                    break;
+                    return a;
                 case "rem":
                     delete();
+                    return a;
                 default:
-                    args(s);
+                    args(c);
+                    if(a.equals("")){
+                        return null;
+                    }
+                    args(a);
             }
         }
+        return null;
     }
 
     private void help (){
@@ -112,12 +129,10 @@ public class ServerTask extends RecursiveTask {
 
     private void args(String s){
         handle.add(s);
-        //TODO: Think about the purpose of this method
     }
 
-    private synchronized void login() {
+    private synchronized void login(String a) {
         try {
-
             InetAddress ip = null;
             try {
                 ip = InetAddress.getLocalHost();
@@ -141,15 +156,18 @@ public class ServerTask extends RecursiveTask {
                 secret += b.intValue();
             }
             out.println("" + secret);
-
-            String user = sQuery.split(" ")[1];
+            String user = a;
             int response = server.login(user, secret);
 
             switch (response){
                 case 1:
+                    if(cNew){
+                        out.println("account exists");
+                        break;
+                    }
                     out.println("welcome " + user);
                     out.println("please enter your password");
-                    while(true) {
+                    for(int i = 0; i < 2; i++) {
                         String password = new Scanner(System.in).nextLine();
                         if ((acc = server.verifyUser(user, password)) != null) {
                             Command.user = acc.getName();
@@ -168,7 +186,7 @@ public class ServerTask extends RecursiveTask {
                     Command.user = acc.getName();
                     break;
                 case 2:
-                    out.println("2");
+                    out.println("dont worry but you are not allowed to login");
                     break;
                 case -1: out.println("Exception");
             }
@@ -197,11 +215,10 @@ public class ServerTask extends RecursiveTask {
         }
     }
 
-    private void open(){
+    private void open(String a){
         try {
-            String path = sQuery.split(" ")[1];
+            String path = a;
             RmiClient.acc = server.open(RmiClient.acc, path);
-            bufferedWrite = true;
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -245,8 +262,14 @@ public class ServerTask extends RecursiveTask {
     protected Object compute(){
         //TODO: Long-running async tasks can go here
         if(bufferedWrite) {
+            /*try {
+                condition.await(1000, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }*/
             while (handle.peek() != null) {
                 try {
+                    server.write(RmiClient.acc, " ");
                     server.write(RmiClient.acc, handle.poll());
                 } catch (RemoteException e) {
                     e.printStackTrace();

@@ -17,7 +17,6 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     DataDAO db = new DataDAO();
     //Core object
     PipeServer server = null;
-    //Host ip
 
     //Non argument construct used outside of package
     protected Controller() throws RemoteException {
@@ -103,6 +102,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         Account account = null;
         account = server.getAccount(user);
         account.getUser().setPassword(pass);
+        update(account, pass);
         return true;
     }
 
@@ -122,7 +122,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
 
     @Override
     public int login(String s, int mac) throws RemoteException {
-        List accounts = db.findAccounts(s, false);
+        List accounts = db.findAccounts(s, true);
         System.out.println(Arrays.toString(accounts.toArray()));
         try{
             if (accounts.isEmpty()){
@@ -132,14 +132,11 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                 return 0;
             }else if(accounts.size() == 1){
                 server.addActiveAcc(mac, (Account) accounts.get(0));
-                db.commit();
                 return 1;
             }else{
-                db.commit();
                 return 2;
             }
         }catch(Exception e){
-            db.commit();
             e.printStackTrace();
             return -1;
         }

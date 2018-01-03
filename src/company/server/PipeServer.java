@@ -21,7 +21,7 @@ public class PipeServer {
 
     public static final String MESSAGE = "Hello I am Pipe, how can I help you?";
     private static final String ROT = "root/";
-
+    private static final String HOST = "192.168.0.16";
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();
     private HashMap<Integer, Account> activeAcs = new HashMap<>();
     private HashMap <String, Integer> keys = new HashMap<>();
@@ -196,7 +196,7 @@ public class PipeServer {
         }
         //Bind controller instance to the name "PipeController"
         try {
-            Naming.rebind("//localhost/PipeController", controller);
+            Naming.rebind("//".concat(HOST).concat("/PipeController"), controller);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
