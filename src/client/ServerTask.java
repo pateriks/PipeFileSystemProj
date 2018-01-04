@@ -341,8 +341,8 @@ public class ServerTask extends RecursiveTask {
                 e1.printStackTrace();
             }
             sb.append(getString(connection));
+            ret = sb.toString();
         }
-        ret = sb.toString();
         return ret;
     }
 }
