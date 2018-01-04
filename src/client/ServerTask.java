@@ -301,8 +301,8 @@ public class ServerTask extends RecursiveTask {
             }*/
             while (handle.peek() != null) {
                 try {
-                    server.write(RmiClient.acc, " ");
                     server.write(RmiClient.acc, handle.poll());
+                    server.write(RmiClient.acc, " ");
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -318,7 +318,6 @@ public class ServerTask extends RecursiveTask {
         if(connection != null){
             connection.start();
             ret = getString(connection);
-
         }
         return ret;
     }
@@ -328,14 +327,18 @@ public class ServerTask extends RecursiveTask {
         try {
             while (connection.open()) {
                 sb = new StringBuilder();
-                sb.append(connection.read());
+                String append = connection.read();
+                if(append==null){
+                    throw new NullPointerException("not ready");
+                }
+                sb.append(append);
             }
-            connection.que.push("bye");
-            connection.send = false;
             ret = sb.toString();
         }catch (NullPointerException e){
-            sb.append(getString(connection));
+            e.printStackTrace();
+            getString(connection);
         }
+        ret = sb.toString();
         return ret;
     }
 }

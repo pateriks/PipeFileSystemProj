@@ -22,6 +22,9 @@ public class RmiClient {
                     if(acc != null) {
                         cmd.lockedMode = false;
                     }
+                }else {
+                    out.println("hello");
+                    out.println((String) taskQ.poll().join());
                 }
             }
             Thread.sleep(1000);

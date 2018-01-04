@@ -43,10 +43,11 @@ public class TCP implements Runnable{
                         iterator.remove();
                         if (key.isConnectable()) {
                             processConnect();
-                            System.out.println("process connect");
+                            //System.out.println("process connect");
                         }
                         if (key.isReadable()) {
                             String msg = processRead(key);
+                            buffer.push(msg);
                             if(msg.equals("resend")){
                                 que.push(last);
                             }else {
@@ -55,18 +56,18 @@ public class TCP implements Runnable{
                                 }
                                 String [] res = msg.split("#");
                                 for(String s : res) {
-                                    System.out.println("[Server]: " + s);
+                                    //System.out.println("\n[Server]: " + s);
                                     if(s.equals("bye")){
                                         done = true;
                                         que.push("bye");
                                     }
                                 }
-                                buffer.push(msg);
                             }
                         }
                         if (key.isWritable()) {
                             if (que.peek() != null) {
                                 last = que.poll();
+                                System.out.println(last);
                                 send = sendStringToServer(last, key);
                             }
                         }
@@ -85,9 +86,9 @@ public class TCP implements Runnable{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("terminated successfully");
+            //System.out.println("terminated successfully");
         } else {
-            System.out.println("terminated without close");
+            //System.out.println("terminated without close");
         }
     }
 
@@ -100,6 +101,7 @@ public class TCP implements Runnable{
             e.printStackTrace();
         }
         if (s.equalsIgnoreCase("bye")) {
+            done = true;
             return false;
         }
         return true;
