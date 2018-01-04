@@ -20,8 +20,7 @@ public class Command implements Runnable{
     public static boolean lockedMode = true;
     public static String user = "";
     public ThreadLocal<ForkJoinTask> l = new ThreadLocal<>();
-    public final Lock lock = new ReentrantLock();
-    public final Condition complete = lock.newCondition();
+
 
     ConcurrentLinkedQueue<ForkJoinTask> queue;
 
@@ -50,10 +49,9 @@ public class Command implements Runnable{
 
     public void run(){
         Scanner UsrIn = new Scanner(System.in);
-        out.print(user + PROMPT);
         String [] sQuery = UsrIn.nextLine().split(" ");
 
-        ServerTask cServerTask = new ServerTask(out, complete);
+        ServerTask cServerTask = new ServerTask(out);
         //Delar upp förfrågan i delar
         //Itererar igenom delarna
         for (String c = hasNext(sQuery); c != null; c = hasNext(sQuery)){
@@ -64,6 +62,8 @@ public class Command implements Runnable{
                     if(c != null){
                         if((a = hasNext(sQuery)) != null) {
                             cServerTask.add(c, a);
+                        }else{
+                            cServerTask.add(c, "");
                         }
                     }
                 }else{
@@ -83,9 +83,9 @@ public class Command implements Runnable{
             }
         }
         queue.add(ForkJoinPool.commonPool().submit(cServerTask));
-        //lock.lock();
-        //complete.signal();
-        //lock.unlock();
+        RmiClient.lock.lock();
+        RmiClient.complete.signal();
+        RmiClient.lock.unlock();
         //Vi tar inte bort element från kön i command
         l.set(queue.peek());
         this.run();

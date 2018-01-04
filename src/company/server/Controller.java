@@ -195,8 +195,8 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     }
 
     @Override
-    public boolean view(String path) throws RemoteException {
-        server.view(path);
+    public boolean view(AccountIntf acc, String path) throws RemoteException {
+        server.view(db.findAccountByName(acc.getId(), true), path);
         return false;
     }
 

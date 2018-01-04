@@ -1,6 +1,8 @@
 package company.server;
 
-import javax.swing.*;
+import company.common.AccountIntf;
+import org.hibernate.collection.internal.PersistentSet;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,13 +15,13 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class PipeServer {
 
-    public static final String MESSAGE = "Hello I am Pipe, how can I help you?";
+    protected static final String MESSAGE = "Hello I am Pipe, how can I help you?";
     protected static final String ROT = "root/";
     private static final String HOST = "192.168.0.16";
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();
@@ -161,13 +163,16 @@ public class PipeServer {
         }
         return null;
     }
+
     protected void addActiveAcc(int key, Account acc){
         activeAcs.put(key, acc);
         keys.put(acc.getUser().name, key);
     }
+
     protected Account getAccount(String user){
         return activeAcs.get(keys.get(user));
     }
+
     protected void dispInfo(){
         activeAcs.forEach(new BiConsumer<Integer, Account>() {
             @Override
@@ -176,15 +181,27 @@ public class PipeServer {
             }
         });
     }
-    protected void view(String path){
-        TCP send = new TCP();
-        try {
-            send.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+    protected void view(Account acc, String path) {
+        Iterator<Item> it = acc.getItem().iterator();
+        boolean ok = false;
+        while (it.hasNext()) {
+            Item item = it.next();
+            if (item.path == path) {
+                ok = true;
+            }
         }
-        send.que.push(path);
+        if (ok) {
+            TCP send = new TCP();
+            try {
+                send.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            send.que.push(path);
+        }
     }
+
     public static void main(String args[]) throws Exception {
         Controller controller = new Controller();
         controller.init(new PipeServer());

@@ -49,13 +49,12 @@ public class ServerTask extends RecursiveTask {
     AccountIntf acc;
     Boolean bufferedWrite = false;
     boolean cNew = false;
-    boolean graphics = false;
+    public static boolean graphics = false;
     String login = "please login";
     TCP connection;
 
-    ServerTask(SafeStandardOut out, Condition c){
+    ServerTask(SafeStandardOut out){
         id = new Random().nextInt(5);
-        condition = c;
         this.out = out;
         try {
             server = (ControllerIntf) Naming.lookup("//".concat(HOST).concat("/PipeController"));
@@ -208,9 +207,9 @@ public class ServerTask extends RecursiveTask {
     private void view(String path){
         connection = new TCP();
         connection.que.push(path);
-        graphics = false;
+        graphics = true;
         try {
-            server.view(path);
+            server.view(RmiClient.acc, path);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -312,9 +311,6 @@ public class ServerTask extends RecursiveTask {
         if(Command.lockedMode) {
             ret = acc;
         }
-        if(graphics){
-            render();
-        }
         if(connection != null){
             connection.start();
             ret = getString(connection);
@@ -328,8 +324,6 @@ public class ServerTask extends RecursiveTask {
                 String append = connection.read();
                 sb.append(append);
             }
-            //final callback
-            System.out.println("success");
             ret = sb.toString();
         return ret;
     }
