@@ -83,7 +83,6 @@ public class HandlerTCP implements Runnable {
         StringBuilder words = new StringBuilder();
         while(sc.hasNextLine()){
             String word = sc.nextLine();
-            words.append("\n");
             words.append(word);
         }
         return words;
@@ -94,7 +93,7 @@ public class HandlerTCP implements Runnable {
             return readFromFile(fromClient).toString();
         } catch (IOException e) {
             e.printStackTrace();
+            return "bye";
         }
-        return null;
     }
 }
