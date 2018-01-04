@@ -335,8 +335,12 @@ public class ServerTask extends RecursiveTask {
             }
             ret = sb.toString();
         }catch (NullPointerException e){
-            e.printStackTrace();
-            getString(connection);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
+            sb.append(getString(connection));
         }
         ret = sb.toString();
         return ret;

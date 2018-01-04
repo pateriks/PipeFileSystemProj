@@ -27,6 +27,7 @@ public class TCP implements Runnable{
 
     protected void start (){
         channelSetup();
+        que.push("!");
         new Thread(this).start();
     }
 
