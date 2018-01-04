@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ForkJoinTask;
 
 public class RmiClient {
+    public final static String HOST = "192.168.0.16";
     public static AccountIntf acc = null;
     public static void main(String args[]) throws Exception {
         SafeStandardOut out = new SafeStandardOut();

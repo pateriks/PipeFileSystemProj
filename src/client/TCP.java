@@ -16,30 +16,30 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class TCP implements Runnable{
+
     protected LinkedList<String> que = new LinkedList<>();
     SocketChannel sC;
     Selector selector;
     String last = "null";
     LinkedList<String> buffer = new LinkedList<>();
     boolean done = false;
+    public boolean send = true;
 
     protected void start (){
         channelSetup();
-        que.push("hello");
         new Thread(this).start();
     }
 
     @Override
     public void run() {
-        boolean send = true;
+
         while(send) {
             try {
                 if (selector.select() > 0) {
                     Set set = selector.selectedKeys();
                     Iterator iterator = set.iterator();
                     while (iterator.hasNext()) {
-                        SelectionKey key = (SelectionKey)
-                                iterator.next();
+                        SelectionKey key = (SelectionKey) iterator.next();
                         iterator.remove();
                         if (key.isConnectable()) {
                             processConnect();
@@ -48,7 +48,6 @@ public class TCP implements Runnable{
                         if (key.isReadable()) {
                             String msg = processRead(key);
                             if(msg.equals("resend")){
-                                System.out.println("resend");
                                 que.push(last);
                             }else {
                                 if(que.peek() != null){
@@ -57,8 +56,9 @@ public class TCP implements Runnable{
                                 String [] res = msg.split("#");
                                 for(String s : res) {
                                     System.out.println("[Server]: " + s);
-                                    if(s.equals("dOnE")){
+                                    if(s.equals("bye")){
                                         done = true;
+                                        que.push("bye");
                                     }
                                 }
                                 buffer.push(msg);
@@ -69,6 +69,9 @@ public class TCP implements Runnable{
                                 last = que.poll();
                                 send = sendStringToServer(last, key);
                             }
+                        }
+                        if(!send){
+                            break;
                         }
                     }
                 }
@@ -89,9 +92,6 @@ public class TCP implements Runnable{
     }
 
     private boolean sendStringToServer(String s, SelectionKey key){
-        if (s.equalsIgnoreCase("bye")) {
-            return false;
-        }
         SocketChannel channel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.wrap(s.getBytes());
         try {
@@ -99,12 +99,15 @@ public class TCP implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        if (s.equalsIgnoreCase("bye")) {
+            return false;
+        }
         return true;
     }
 
     private void channelSetup(){
         try {
-            InetAddress hostIP = InetAddress.getByName("localhost");
+            InetAddress hostIP = InetAddress.getByName(RmiClient.HOST);
             selector = Selector.open();
             sC = SocketChannel.open();
             sC.configureBlocking(false);
@@ -121,9 +124,9 @@ public class TCP implements Runnable{
             sC.finishConnect();
         } catch (IOException e) {
             try {
-                Thread.sleep(1000);
                 sC.close();
                 selector.close();
+                Thread.sleep(1000);
                 channelSetup();
                 this.run();
             }catch (Exception e1){

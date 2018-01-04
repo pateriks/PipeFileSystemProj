@@ -208,7 +208,6 @@ public class ServerTask extends RecursiveTask {
     private void view(String path){
         connection = new TCP();
         connection.que.push(path);
-        connection.start();
         graphics = false;
         try {
             server.view(path);
@@ -317,6 +316,7 @@ public class ServerTask extends RecursiveTask {
             render();
         }
         if(connection != null){
+            connection.start();
             ret = getString(connection);
 
         }
@@ -324,14 +324,17 @@ public class ServerTask extends RecursiveTask {
     }
     private static String getString(TCP connection){
         String ret = null;
+        StringBuilder sb = new StringBuilder();
         try {
             while (connection.open()) {
-                StringBuilder sb = new StringBuilder();
+                sb = new StringBuilder();
                 sb.append(connection.read());
-                ret = sb.toString();
             }
+            connection.que.push("bye");
+            connection.send = false;
+            ret = sb.toString();
         }catch (NullPointerException e){
-            getString(connection);
+            sb.append(getString(connection));
         }
         return ret;
     }
