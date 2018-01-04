@@ -48,7 +48,7 @@ public class TCP implements Runnable{
                         }
                         if (key.isReadable()) {
                             String msg = processRead(key);
-                            buffer.push(msg);
+
                             if(msg.equals("resend")){
                                 que.push(last);
                             }else {
@@ -58,9 +58,11 @@ public class TCP implements Runnable{
                                 String [] res = msg.split("#");
                                 for(String s : res) {
                                     //System.out.println("\n[Server]: " + s);
-                                    if(s.equals("bye")){
+                                    if (s.equals("bye")) {
                                         done = true;
                                         que.push("bye");
+                                    }else{
+                                        buffer.push(msg);
                                     }
                                 }
                             }
@@ -68,7 +70,7 @@ public class TCP implements Runnable{
                         if (key.isWritable()) {
                             if (que.peek() != null) {
                                 last = que.poll();
-                                System.out.println(last);
+                                //System.out.println(last);
                                 send = sendStringToServer(last, key);
                             }
                         }
@@ -83,6 +85,7 @@ public class TCP implements Runnable{
         }
         if (!send) {
             try {
+
                 sC.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -167,6 +170,6 @@ public class TCP implements Runnable{
         if(buffer.peek() != null) {
             return buffer.poll();
         }
-        return null;
+        return "";
     }
 }

@@ -23,7 +23,6 @@ public class RmiClient {
                         cmd.lockedMode = false;
                     }
                 }else {
-                    out.println("hello");
                     out.println((String) taskQ.poll().join());
                 }
             }

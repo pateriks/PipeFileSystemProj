@@ -96,6 +96,7 @@ public class TCP {
                             //ForkJoinTask<Integer> task = lookup.get(key.channel().hashCode());
                             if(getMsg.equals("bye")){
                                 key.channel().close();
+                                System.out.println("closed");
                                 run = false;
                                 //task.cancel(true);
                                 break;
@@ -105,6 +106,9 @@ public class TCP {
                             //}else{
                             //    send(key, "resend");
                             //}
+                        }
+                        if(!run){
+                            break;
                         }
                     }
                 }catch(Exception e) {

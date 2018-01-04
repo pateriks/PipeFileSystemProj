@@ -323,26 +323,14 @@ public class ServerTask extends RecursiveTask {
     }
     private static String getString(TCP connection){
         String ret = null;
-        StringBuilder sb = new StringBuilder();
-        try {
+        StringBuilder sb = new StringBuilder("");
             while (connection.open()) {
-                sb = new StringBuilder();
                 String append = connection.read();
-                if(append==null){
-                    throw new NullPointerException("not ready");
-                }
                 sb.append(append);
             }
+            //final callback
+            System.out.println("success");
             ret = sb.toString();
-        }catch (NullPointerException e){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            sb.append(getString(connection));
-            ret = sb.toString();
-        }
         return ret;
     }
 }

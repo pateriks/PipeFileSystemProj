@@ -187,13 +187,6 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     @Override
     public boolean logout(AccountIntf acc){
         try {
-            try {
-                Naming.unbind("//".concat("localhost").concat("/Account"));
-            } catch (NotBoundException e) {
-                e.printStackTrace();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
             server.multiClose(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();
