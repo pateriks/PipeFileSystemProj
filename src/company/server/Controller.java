@@ -5,6 +5,7 @@ import company.common.ControllerIntf;
 
 import org.hibernate.collection.internal.PersistentSet;
 
+import javax.persistence.RollbackException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -87,11 +88,11 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                     }
                 }
                 if(item == null){
-                    throw new Exception("no item");
+                    throw new NullPointerException("no item");
                 }else{
                     server.open(item, account);
                 }
-            }catch (Exception e){
+            }catch (NullPointerException e){
                 e.printStackTrace();
                 t.start();
                 try {
@@ -107,6 +108,8 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                 }
                 account.setItem(h);
                 db.commit();
+            }catch (RollbackException e){
+                e.printStackTrace();
             }
         }else if(lean == 2){
             //everything is fine
