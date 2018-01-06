@@ -17,6 +17,10 @@ import java.util.Set;
     @NamedQuery(
             name = "findAccounts",
             query = "SELECT acct FROM Account acct WHERE acct.user.name LIKE :userName"
+    ),
+    @NamedQuery(
+            name = "findItemByPath",
+            query = "SELECT acct FROM Account acct WHERE acct.item.path LIKE :sPath"
     )
 })
 

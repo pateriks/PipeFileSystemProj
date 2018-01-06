@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.BiConsumer;
@@ -27,6 +28,7 @@ public class PipeServer {
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();
     private HashMap<Integer, Account> activeAcs = new HashMap<>();
     private HashMap <String, Integer> keys = new HashMap<>();
+    private HashMap <Integer, String> msgs = new HashMap<>();
 
     public String getMessage() {
         return MESSAGE;
@@ -52,14 +54,11 @@ public class PipeServer {
     }
 
     protected void multiWrite(User user, String input){
-        rootMap.get(user.username).forEach(new BiConsumer<String, OutputStream>() {
-            @Override
-            public void accept(String s, OutputStream outputStream) {
-                try {
-                    outputStream.write(input.getBytes());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        rootMap.get(user.username).forEach((s, outputStream) -> {
+            try {
+                outputStream.write(input.getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
     }
@@ -114,14 +113,15 @@ public class PipeServer {
         }
         return true;
     }
-
-    protected OutputStream open(String s, User user) {
+    protected boolean open(Item item, Account acc){
+        User user = acc.getUser();
         OutputStream t = null;
+        String s = item.path;
         try {
             t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
-            if(rootMap.containsKey(user.username)){
+            if (rootMap.containsKey(user.username)) {
                 rootMap.get(user.username).put(s, t);
-            }else {
+            } else {
                 HashMap<String, OutputStream> n = new HashMap<>();
                 n.put(s, t);
                 rootMap.put(user.username, n);
@@ -130,7 +130,51 @@ public class PipeServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return t;
+        return true;
+    }
+    protected int open(String s, Account acc) {
+        int ret = 0;
+        acc.getItem();
+        User user = acc.getUser();
+        OutputStream t = null;
+        Item item;
+        if((item = getItem(acc, s)) != null) {
+            //Are acc the haser
+            try {
+                t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
+                if (rootMap.containsKey(user.username)) {
+                    rootMap.get(user.username).put(s, t);
+                } else {
+                    HashMap<String, OutputStream> n = new HashMap<>();
+                    n.put(s, t);
+                    rootMap.put(user.username, n);
+                }
+                t.write("".getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            ret = 1;
+        }else if((item = getItem(s)) != null){
+            if(item.getPermissions().equals("public")){
+                try {
+                    t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
+                    if (rootMap.containsKey(user.username)) {
+                        rootMap.get(user.username).put(s, t);
+                    } else {
+                        HashMap<String, OutputStream> n = new HashMap<>();
+                        n.put(s, t);
+                        rootMap.put(user.username, n);
+                    }
+                    t.write("".getBytes());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            ret = 2;
+        }else{
+            //Just make a new Item if not exists in db
+        }
+        return ret;
     }
 
     protected Boolean write(String s) {
@@ -183,6 +227,18 @@ public class PipeServer {
     }
 
     protected void view(Account acc, String path) {
+        if (checkAccess(acc, path)) {
+            TCP send = new TCP();
+            try {
+                send.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            send.que.push(path);
+        }
+    }
+
+    private boolean checkAccess(Account acc, String path){
         Iterator<Item> it = acc.getItem().iterator();
         boolean ok = false;
         while (it.hasNext()) {
@@ -191,14 +247,51 @@ public class PipeServer {
                 ok = true;
             }
         }
-        if (ok) {
-            TCP send = new TCP();
-            try {
-                send.start();
-            } catch (IOException e) {
-                e.printStackTrace();
+        return ok;
+    }
+
+    private Item getItem(Account acc, String path){
+        Iterator<Item> it = acc.getItem().iterator();
+        Item item = null;
+        boolean ok = false;
+        while (it.hasNext()) {
+            item = it.next();
+            if (item.path == path) {
+                ok = true;
             }
-            send.que.push(path);
+        }
+        if(ok) {
+            return item;
+        }else{
+            return null;
+        }
+    }
+
+    private Item getItem(String path){
+        Item item = null;
+        boolean ok = false;
+        Collection<Account> c = activeAcs.values();
+        Iterator<Account> iterator = c.iterator();
+        while(iterator.hasNext()) {
+            Account acc = iterator.next();
+            Iterator<Item> it = acc.getItem().iterator();
+            ok = false;
+            while (it.hasNext()) {
+                item = it.next();
+                if (item.path == path) {
+                    ok = true;
+                    break;
+                }
+            }
+            if(ok){
+                int mac = keys.get(acc.getUser().name);
+                break;
+            }
+        }
+        if(ok) {
+            return item;
+        }else{
+            return null;
         }
     }
 

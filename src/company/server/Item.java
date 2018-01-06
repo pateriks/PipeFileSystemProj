@@ -1,12 +1,7 @@
 package company.server;
 
 import javax.persistence.*;
-@org.hibernate.annotations.NamedQueries({
-        @org.hibernate.annotations.NamedQuery(
-                name = "findItemByName",
-                query = "SELECT item FROM Item item WHERE item.path LIKE :sPath"
-        )
-})
+
 @Entity(name = "Item")
 public class Item {
     @Id

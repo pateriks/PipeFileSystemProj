@@ -117,6 +117,11 @@ public class ServerTask extends RecursiveTask {
                 case "vi":
                     view(a);
                     return null;
+                case "debug":
+                    RmiClient.lock.lock();
+                    RmiClient.complete.signal();
+                    RmiClient.lock.unlock();
+                    return null;
                 default:
                     args(c);
                     if(a.equals("")){
@@ -269,6 +274,7 @@ public class ServerTask extends RecursiveTask {
         try {
             if(RmiClient.acc != null) {
                 server.logout(RmiClient.acc);
+                RmiClient.acc = null;
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -307,24 +313,24 @@ public class ServerTask extends RecursiveTask {
                 }
             }
             bufferedWrite = false;
-        }
-        if(Command.lockedMode) {
+        }if(Command.lockedMode) {
             ret = acc;
-        }
-        if(connection != null){
+        }if(connection != null){
             connection.start();
             ret = getString(connection);
+        }
+        if(ret == null){
         }
         return ret;
     }
     private static String getString(TCP connection){
         String ret = null;
         StringBuilder sb = new StringBuilder("");
-            while (connection.open()) {
-                String append = connection.read();
-                sb.append(append);
-            }
-            ret = sb.toString();
+        while (connection.open()) {
+            String append = connection.read();
+            sb.append(append);
+        }
+        ret = sb.toString();
         return ret;
     }
 }

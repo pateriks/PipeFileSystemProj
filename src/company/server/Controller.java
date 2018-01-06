@@ -5,9 +5,6 @@ import company.common.ControllerIntf;
 
 import org.hibernate.collection.internal.PersistentSet;
 
-import java.net.MalformedURLException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -69,21 +66,51 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     }
 
     @Override
-    public AccountIntf open(AccountIntf accountIntf, String path) throws RemoteException {
-        Account acc = null;
-        Item item = new Item(path);
-        db.persistItem(item);
-        acc = db.findAccountByName(accountIntf.getId(), false);
-        server.open(path, acc.getUser());
-        Set h = acc.getItem();
-        h.add(item);
-        if(h == null){
-            h = new PersistentSet();
-            h.add(item);
+    public AccountIntf open(AccountIntf acc, String path) throws RemoteException {
+        Item it = new Item(path);
+        Thread t = new Thread(()->{
+            db.persistItem(it);
+        });
+        Item item = null;
+        Account account = db.findAccountByName(acc.getId(), false);
+        int lean = server.open(path, account);
+        if(lean == 0) {
+            try {
+                //search in db
+                account = db.searchItem(path);
+                Collection<Item> set = account.getItem();
+                Iterator<Item> ite = set.iterator();
+                while (ite.hasNext()){
+                    item = ite.next();
+                    if(item.path.equals(path)){
+                        break;
+                    }
+                }
+                if(item == null){
+                    throw new Exception("no item");
+                }else{
+                    server.open(item, account);
+                }
+            }catch (Exception e){
+                t.start();
+                try {
+                    t.join();
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+                Set h = account.getItem();
+                h.add(it);
+                if (h == null) {
+                    h = new PersistentSet();
+                    h.add(item);
+                }
+                account.setItem(h);
+                db.commit();
+            }
+        }else if(lean == 2){
+            //everything is fine
         }
-        acc.setItem(h);
-        db.commit();
-        return acc;
+        return account;
     }
 
     @Override

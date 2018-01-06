@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class TCP implements Runnable{
-
+    private long idling = 0;
     protected LinkedList<String> que = new LinkedList<>();
     SocketChannel sC;
     Selector selector;
@@ -84,8 +84,12 @@ public class TCP implements Runnable{
         }
         if (!send) {
             try {
-
-                sC.close();
+                if(selector.isOpen()){
+                    selector.close();
+                }
+                if(sC.isOpen()) {
+                    sC.close();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -131,9 +135,15 @@ public class TCP implements Runnable{
             try {
                 sC.close();
                 selector.close();
-                Thread.sleep(1000);
-                channelSetup();
-                this.run();
+                System.out.println("idle + " + Thread.currentThread().toString());
+                idling++;
+                if(!(idling>2)) {
+                    Thread.sleep(10);
+                    channelSetup();
+                    this.run();
+                }else{
+                    send = false;
+                }
             }catch (Exception e1){
             }
 

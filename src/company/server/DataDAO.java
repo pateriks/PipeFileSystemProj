@@ -48,11 +48,12 @@ public class DataDAO {
         }
     }
 
-    public Item findItem(String sPath, boolean bool){
+    public Account searchItem(String sPath){
+        boolean bool = true;
         try {
             EntityManager em = beginTransaction();
             try {
-                return em.createNamedQuery("findItemByPath", Item.class).
+                return em.createNamedQuery("findItemByPath", Account.class).
                         setParameter("sPath", sPath).getSingleResult();
             } catch (NoResultException noSuchAccount) {
                 return null;
