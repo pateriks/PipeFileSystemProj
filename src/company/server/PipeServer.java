@@ -274,13 +274,16 @@ public class PipeServer {
         Iterator<Account> iterator = c.iterator();
         while(iterator.hasNext()) {
             Account acc = iterator.next();
-            Iterator<Item> it = acc.getItem().iterator();
-            ok = false;
-            while (it.hasNext()) {
-                item = it.next();
-                if (item.path == path) {
-                    ok = true;
-                    break;
+            Iterator<Item> it;
+            if(acc.getItem() != null) {
+                it = acc.getItem().iterator();
+                ok = false;
+                while (it.hasNext()) {
+                    item = it.next();
+                    if (item.path == path) {
+                        ok = true;
+                        break;
+                    }
                 }
             }
             if(ok){
