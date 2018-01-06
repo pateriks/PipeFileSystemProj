@@ -92,6 +92,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                     server.open(item, account);
                 }
             }catch (Exception e){
+                e.printStackTrace();
                 t.start();
                 try {
                     t.join();
