@@ -2,10 +2,7 @@ package client;
 
 import company.common.AccountIntf;
 import company.common.ControllerIntf;
-import company.server.Account;
-import company.server.PipeServer;
 
-import java.io.PrintWriter;
 import java.net.*;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -15,10 +12,7 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.RecursiveTask;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class ServerTask extends RecursiveTask {
     private final String HOST = "192.168.0.16";
