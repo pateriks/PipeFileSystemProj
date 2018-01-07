@@ -20,7 +20,7 @@ import java.util.Set;
     ),
     @NamedQuery(
             name = "findItemByPath",
-            query = "SELECT acct FROM Account acct WHERE acct.item.path LIKE :sPath"
+            query = "SELECT item FROM Account acct JOIN Account.item item Where item.path LIKE :sPath"
     )
 })
 

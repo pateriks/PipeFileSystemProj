@@ -289,6 +289,17 @@ public class ServerTask extends RecursiveTask {
         }
     }
 
+    private static String getString(TCP connection){
+        String ret = null;
+        StringBuilder sb = new StringBuilder("");
+        while (connection.open()) {
+            String append = connection.read();
+            sb.append(append);
+        }
+        ret = sb.toString();
+        return ret;
+    }
+
     protected Object compute(){
         //TODO: Long-running async tasks can go here
         Object ret = null;
@@ -311,20 +322,12 @@ public class ServerTask extends RecursiveTask {
             ret = acc;
         }if(connection != null){
             connection.start();
+            out.println("getting string");
             ret = getString(connection);
         }
         if(ret == null){
+            ret = "nothing to do";
         }
-        return ret;
-    }
-    private static String getString(TCP connection){
-        String ret = null;
-        StringBuilder sb = new StringBuilder("");
-        while (connection.open()) {
-            String append = connection.read();
-            sb.append(append);
-        }
-        ret = sb.toString();
         return ret;
     }
 }
