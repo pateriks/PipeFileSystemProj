@@ -11,6 +11,10 @@ import java.nio.charset.CharsetDecoder;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * Körbar klass som sätter upp en TCP lyssnare
+ * Kan konstruerasa att köra non-blocking
+ */
 public class TCP {
     private ServerSocketChannel ssC;
     private Selector selector;
@@ -18,15 +22,18 @@ public class TCP {
     protected LinkedList <String> que = new LinkedList<>();
     private Map <Integer, ForkJoinTask<Integer>> lookup = Collections.synchronizedMap(new HashMap<Integer, ForkJoinTask<Integer>>());
     private long timer;
+
     private void initSelector() throws IOException {
         selector = Selector.open();
     }
+
     private void initSSC() throws IOException {
         ssC = ServerSocketChannel.open();
         ssC.configureBlocking(false);
         ssC.bind(new InetSocketAddress(8888));
         ssC.register(selector, SelectionKey.OP_ACCEPT);
     }
+
     public void send(SelectionKey key, String s) throws IOException {
         String path;
         if(que.peek() != null){
@@ -38,9 +45,9 @@ public class TCP {
         //if(!s.equals("resend")) {
         //    lookup.put(key.channel().hashCode(), task);
         //}
-
     }
-    private String receive(SelectionKey key) throws IOException {
+
+    protected String receive(SelectionKey key) throws IOException {
         SocketChannel sC = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         sC.read(buffer);
@@ -55,14 +62,15 @@ public class TCP {
         }
         return charBuffer.toString();
     }
-    public void start() throws IOException {
+
+    protected void start() throws IOException {
         initSelector();
         initSSC();
         createSocketServer();
         System.out.println("started");
     }
 
-    private void startHandler(SelectionKey key) throws IOException {
+    protected void startHandler(SelectionKey key) throws IOException {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         SocketChannel sC = serverSocketChannel.accept();
         sC.configureBlocking(false);

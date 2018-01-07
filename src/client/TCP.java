@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 /**
+ *
  * Klass som skickar och tar emot data till en server
  * Möjlighet att köras multitrådat eller som en nonblocking modul
  */

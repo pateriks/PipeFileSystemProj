@@ -11,6 +11,13 @@ import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.concurrent.RecursiveTask;
 
+/**
+ * ServerTask är ett objekt fokuserat på att hantera en uppgift som skickas till servern
+ * ServerTask används för både synkrona blockerande uppgifter såväl som asynkrona uppgifter
+ * eftersom allt som skickas till servern konstrueras i en ServerTask
+ *
+ * Vid inloggning sker en 2 vägs kommunikation med servern och ServerTask behöver användar input för att ta in lösenord
+ */
 public class ServerTask extends RecursiveTask {
 
     static String HOST = "localhost";

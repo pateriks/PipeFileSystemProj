@@ -23,6 +23,7 @@ public class RmiClient {
     public static AccountIntf account = null;
 
     /**
+     *
      * Program som använder sig utav ett Command UI interface med hjälp av
      * @NonBlockingInterpreter
      *

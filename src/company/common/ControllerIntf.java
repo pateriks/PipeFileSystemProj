@@ -3,6 +3,9 @@ package company.common;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+/**
+ * Ger användbara metoder för klienten
+ */
 public interface ControllerIntf extends Remote {
     String getMessage()                                 throws RemoteException;
     String getDir()                                     throws RemoteException;

@@ -4,6 +4,10 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Databas: Data Accessible Object
+ * Används för att skapa transaktioner till databasen
+ */
 public class DataDAO {
     //FINAL INITILATIONS
     private final EntityManagerFactory emf;

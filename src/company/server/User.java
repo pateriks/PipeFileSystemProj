@@ -3,6 +3,9 @@ package company.server;
 import javax.persistence.*;
 import java.util.Random;
 
+/**
+ * Databas objekt som används av Account för att skilja användardata mot account data
+ */
 @Entity(name = "User")
 public class User {
     @Id

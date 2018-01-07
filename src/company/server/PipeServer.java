@@ -16,6 +16,11 @@ import java.util.Iterator;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
+/**
+ * Körbar server
+ * Startar en kontroller som registreras på HOST addressen
+ * Hanterar alla operationer som programmet hanterar förutom lokala databas operationer
+ */
 public class PipeServer {
     private static final String HOST = "192.168.0.16";
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();

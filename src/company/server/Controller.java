@@ -16,38 +16,88 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     //Core object
     PipeServer core = null;
 
-    //Non argument construct used outside of package
+    /**
+     * Konstruktor
+     * Av kontrollerns natur behövs inga initialiseringar
+     * Vid skapandet av kontroller skapas Databas objekt vilket är en väldigt stor enhet
+     * @throws RemoteException
+     */
     protected Controller() throws RemoteException {
         super();
     }
-    //Vem är det som har kontroll
+
+    /**
+     * Admin previligerad metod
+     * @return
+     */
+    private String [] list (){
+        java.lang.Object[] paths = core.list();
+        String[] ret = new String[paths.length];
+        int i = 0;
+        for (java.lang.Object p : paths){
+            ret[i] = p.toString();
+            i++;
+        }
+        return ret;
+    }
+
+    /**
+     * En nödvändig initialisering för att kontrollern ska fungera
+     * @param server
+     */
     protected void init(PipeServer server){
+        //Vem är det som har kontroll
         this.core = server;
     }
 
+    /**
+     * Ger info om kärnan
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public String getMessage() throws RemoteException {
         return core.getMessage();
     }
 
+    /**
+     * Inte implementerad
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public String getDir() throws RemoteException {
         return null;
     }
 
+    /**
+     * Inte implementerad
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public String mkDir() throws RemoteException {
         return null;
     }
 
-    @Override
+    /**
+     * Används för att testa funktionalitet
+     * @return
+     * @throws RemoteException
+     */
     public boolean creat() throws RemoteException {
-        return core.creat("root");
+        return core.creat("test");
     }
 
+    /**
+     * Skapa en ny fil till givet namn
+     * @param name
+     * @return
+     * @throws RemoteException
+     */
     @Override
-    public boolean creat(String path) throws RemoteException {
-        return core.creat(path);
+    public boolean creat(String name) throws RemoteException {
+        return core.creat(name);
     }
 
     /**
@@ -320,20 +370,5 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
             e.printStackTrace();
         }
         return true;
-    }
-
-    /**
-     * Admin previligerad metod
-     * @return
-     */
-    private String [] list (){
-        java.lang.Object[] paths = core.list();
-        String[] ret = new String[paths.length];
-        int i = 0;
-        for (java.lang.Object p : paths){
-            ret[i] = p.toString();
-            i++;
-        }
-        return ret;
     }
 }

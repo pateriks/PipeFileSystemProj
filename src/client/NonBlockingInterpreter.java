@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.concurrent.*;
 
 /**
+ *
  * Enkeltrådat användargränssnitt som
  * använder sig av ServerTask för att hantera uppgifter
  */

@@ -2,6 +2,10 @@ package company.server;
 
 import javax.persistence.*;
 
+/**
+ * Databas objekt
+ * Refereras av Account
+ */
 @Entity(name = "Item")
 public class Item {
     @Id
@@ -63,6 +67,10 @@ public class Item {
         this.size = size;
     }
 
+    /**
+     * Bestämmer hur filerna listas för användaren
+     * @return
+     */
     @Override
     public String toString() {
         return (path + "\tsize " + size + "\taccess " + access + "\t" + permissions);

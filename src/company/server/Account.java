@@ -23,7 +23,10 @@ import java.util.Set;
             query = "SELECT account FROM Account account JOIN account.item item WHERE item.path LIKE :sPath"
     )
 })
-
+/**
+ * Databas objekt Account
+ * Metoder som är "Override" kan användas av användare
+ */
 @Entity(name = "Account")
 public class Account extends UnicastRemoteObject implements AccountIntf {
     @Id
@@ -45,8 +48,8 @@ public class Account extends UnicastRemoteObject implements AccountIntf {
         super();
         user = new User(s);
     }
-    //Overrides can be accessed by user
 
+    //Overrides can be accessed by user
     public void getPassword(String email) throws RemoteException {
         return;
     }
