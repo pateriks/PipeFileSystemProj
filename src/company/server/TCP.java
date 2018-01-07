@@ -17,7 +17,7 @@ public class TCP {
     private boolean run;
     protected LinkedList <String> que = new LinkedList<>();
     private Map <Integer, ForkJoinTask<Integer>> lookup = Collections.synchronizedMap(new HashMap<Integer, ForkJoinTask<Integer>>());
-
+    private long timer;
     private void initSelector() throws IOException {
         selector = Selector.open();
     }
@@ -67,6 +67,7 @@ public class TCP {
         SocketChannel sC = serverSocketChannel.accept();
         sC.configureBlocking(false);
         sC.register(selector, SelectionKey.OP_READ);
+        send(sC.keyFor(selector), "bla");
         //ForkJoinTask<Integer> task = ForkJoinPool.commonPool().submit(new HandlerTCP(sC), 1);
         //lookup.put(sC.hashCode(), task);
     }
@@ -85,13 +86,16 @@ public class TCP {
                         System.out.println("iterate");
                         SelectionKey key = iterator.next();
                         iterator.remove();
+
                         if (!key.isValid()) {
                             continue;
                         }
                         if (key.isAcceptable()) {
-                            System.out.println("accepted");
                             startHandler(key);
+                            System.out.println("accepted");
+                            timer = System.currentTimeMillis();
                         } else if (key.isReadable()) {
+                            System.out.println("readable");
                             String getMsg = receive(key);
                             //ForkJoinTask<Integer> task = lookup.get(key.channel().hashCode());
                             if(getMsg.equals("bye")){

@@ -153,6 +153,7 @@ public class PipeServer {
             ret = 1;
         }else if((item = getItem(s)) != null){
             if(item.getPermissions().equals("public")){
+                System.out.println("permission allowed");
                 try {
                     t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
                     if (rootMap.containsKey(user.username)) {
@@ -166,6 +167,8 @@ public class PipeServer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }else {
+                System.out.println("permission not allowed");
             }
             ret = 2;
         }else{
@@ -225,12 +228,14 @@ public class PipeServer {
 
     protected void view(Account acc, String path) {
         if (checkAccess(acc, path)) {
+            System.out.println("view ok");
             TCP send = new TCP();
             try {
                 send.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            path = path.concat(".txt");
             send.que.push(path);
         }
     }
@@ -240,7 +245,8 @@ public class PipeServer {
         boolean ok = false;
         while (it.hasNext()) {
             Item item = it.next();
-            if (item.path == path) {
+            if (item.path.equals(path)) {
+
                 ok = true;
             }
         }
@@ -253,7 +259,7 @@ public class PipeServer {
         boolean ok = false;
         while (it.hasNext()) {
             item = it.next();
-            if (item.path == path) {
+            if (item.path.equals(path)) {
                 ok = true;
             }
         }
@@ -277,7 +283,7 @@ public class PipeServer {
                 ok = false;
                 while (it.hasNext()) {
                     item = it.next();
-                    if (item.path == path) {
+                    if (item.path.equals(path)) {
                         ok = true;
                         break;
                     }

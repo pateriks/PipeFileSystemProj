@@ -72,14 +72,20 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         Thread t = new Thread(()->{
             db.persistItem(it);
         });
-        Item item = null;
+
         Account account = db.findAccountByName(acc.getId(), false);
         int lean = server.open(path, account);
+        System.out.println("Lean: " + lean);
         if(lean == 0) {
+            Item item = null;
             try {
                 //search in db
-                account = db.searchItem(path);
-                Collection<Item> set = account.getItem();
+                Account account1 = db.searchItem(path);
+                if(account1 == null){
+                    throw new NullPointerException("no account");
+                }
+                System.out.println("This item belongs to = " + account1.getUser().name);
+                Collection<Item> set = account1.getItem();
                 Iterator<Item> ite = set.iterator();
                 while (ite.hasNext()){
                     item = ite.next();
@@ -90,9 +96,15 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                 if(item == null){
                     throw new NullPointerException("no item");
                 }else{
-                    server.open(item, account);
+                    if(item.getPermissions().equals("public")) {
+                        server.open(item, account);
+                    }else{
+                        return null;
+                    }
                 }
+                //throw new NullPointerException("hej remove later");
             }catch (NullPointerException e){
+                System.out.println("catched");
                 e.printStackTrace();
                 t.start();
                 try {
@@ -100,14 +112,18 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
+                account = db.findAccountByName(acc.getId(), false);
                 Set h = account.getItem();
-                h.add(it);
                 if (h == null) {
                     h = new PersistentSet();
-                    h.add(item);
+                    h.add(it);
+                }else{
+                    h.add(it);
                 }
+
                 account.setItem(h);
                 db.commit();
+                server.open(it, account);
             }catch (RollbackException e){
                 e.printStackTrace();
             }
