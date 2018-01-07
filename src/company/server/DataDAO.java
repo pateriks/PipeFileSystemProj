@@ -49,7 +49,7 @@ public class DataDAO {
     }
 
     public Account searchItem(String sPath){
-        boolean bool = true;
+        boolean bool = false;
         try {
             EntityManager em = beginTransaction();
             try {
