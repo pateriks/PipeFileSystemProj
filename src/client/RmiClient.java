@@ -38,7 +38,7 @@ public class RmiClient {
             lock.unlock();
             lock.lock();
             complete.await();
-
+            Thread.sleep(1000);
             while(taskQ.peek() != null){
                 Object res;
                 try {

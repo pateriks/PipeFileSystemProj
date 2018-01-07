@@ -82,6 +82,7 @@ public class Command implements Runnable{
                 out.println(Integer.toString(Thread.activeCount()));
             }
         }
+        out.println("Threads: " + Integer.toString(Thread.activeCount()));
         queue.add(ForkJoinPool.commonPool().submit(cServerTask));
         RmiClient.lock.lock();
         RmiClient.complete.signal();

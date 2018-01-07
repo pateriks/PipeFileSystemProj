@@ -32,13 +32,15 @@ public class TCP implements Runnable{
 
     @Override
     public void run() {
-
+        //System.out.println("ready to work");
+        boolean once = true;
         while(send) {
             try {
                 if (selector.select() > 0) {
                     Set set = selector.selectedKeys();
                     Iterator iterator = set.iterator();
                     while (iterator.hasNext()) {
+                        //System.out.println("iterate");
                         SelectionKey key = (SelectionKey) iterator.next();
                         iterator.remove();
                         if (key.isConnectable()) {
@@ -56,9 +58,10 @@ public class TCP implements Runnable{
                                 }
                                 String [] res = msg.split("#");
                                 for(String s : res) {
-                                    //System.out.println("\n[Server]: " + s);
+                                    //System.out.println("[Server]: " + s);
                                     if (s.equals("bye")) {
                                         done = true;
+                                        //System.out.println("closing");
                                         que.push("bye");
                                     }else{
                                         buffer.push(msg);
@@ -72,6 +75,7 @@ public class TCP implements Runnable{
                                 //System.out.println(last);
                                 send = sendStringToServer(last, key);
                             }
+                            //System.out.println("process write");
                         }
                         if(!send){
                             break;
@@ -84,12 +88,8 @@ public class TCP implements Runnable{
         }
         if (!send) {
             try {
-                if(selector.isOpen()){
-                    selector.close();
-                }
-                if(sC.isOpen()) {
-                    sC.close();
-                }
+                selector.close();
+                sC.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -205,7 +205,6 @@ public class ServerTask extends RecursiveTask {
 
     private void view(String path){
         connection = new TCP();
-        connection.que.push(path);
         graphics = true;
         try {
             server.view(RmiClient.acc, path);
@@ -293,6 +292,11 @@ public class ServerTask extends RecursiveTask {
         String ret = null;
         StringBuilder sb = new StringBuilder("");
         while (connection.open()) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             String append = connection.read();
             sb.append(append);
         }
