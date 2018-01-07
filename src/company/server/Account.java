@@ -19,8 +19,8 @@ import java.util.Set;
             query = "SELECT acct FROM Account acct WHERE acct.user.name LIKE :userName"
     ),
     @NamedQuery(
-            name = "findItemByPath",
-            query = "SELECT acc FROM Account acc JOIN acc.item item WHERE item.path LIKE :sPath"
+            name = "findAccountByPath",
+            query = "SELECT account FROM Account account JOIN account.item item WHERE item.path LIKE :sPath"
     )
 })
 
@@ -47,12 +47,10 @@ public class Account extends UnicastRemoteObject implements AccountIntf {
     }
     //Overrides can be accessed by user
 
-    @Override
     public void getPassword(String email) throws RemoteException {
         return;
     }
 
-    @Override
     public String getUserName() throws RemoteException {
         return user.username;
     }
@@ -67,7 +65,6 @@ public class Account extends UnicastRemoteObject implements AccountIntf {
         return user.name;
     }
 
-    @Override
     public boolean hasUser() throws RemoteException {
         return (!user.password.equals(""));
     }
@@ -75,11 +72,6 @@ public class Account extends UnicastRemoteObject implements AccountIntf {
     @Override
     public boolean verifyUser(String password) throws RemoteException {
         return password.equals(this.user.password);
-    }
-
-    @Override
-    public void setUser(String password) throws RemoteException {
-        user.setPassword(password);
     }
 
     public User getUser(){

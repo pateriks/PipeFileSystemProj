@@ -35,15 +35,17 @@ public class ServerTask extends RecursiveTask {
 
 
     private LinkedList<String> handle = new LinkedList<>();
-    private SafeStandardOut out = null;
+    private boolean out = false;
     private ControllerIntf server;
     private AccountIntf account;
     private boolean bufferedWrite = false;
-    boolean cNew = false;
+    private boolean cNew = false;
     private String login = "please login";
     private TCP connection;
+    private NonBlockingInterpreter cmd;
 
-    ServerTask(SafeStandardOut out){
+    ServerTask(boolean out, NonBlockingInterpreter cmd){
+        this.cmd = cmd;
         this.out = out;
         try {
             server = (ControllerIntf) Naming.lookup("//".concat(HOST).concat("/PipeController"));
@@ -64,7 +66,7 @@ public class ServerTask extends RecursiveTask {
     }
 
     public String add(String c, String a) throws Exception{
-        if(Command.lockedMode){
+        if(cmd.lockedMode){
             switch (c) {
                 case "usr":
                     login(a);
@@ -78,7 +80,7 @@ public class ServerTask extends RecursiveTask {
                     return a;
                 default:
                     args(c);
-                    out.println(login);
+                    println(login);
                     if(a.equals("")){
                         return null;
                     }
@@ -130,7 +132,7 @@ public class ServerTask extends RecursiveTask {
     }
 
     private void help (){
-        out.println(Arrays.toString(Tasks.values()).replace(",", "\n"));
+        println(Arrays.toString(Tasks.values()).replace(",", "\n"));
     }
 
     private void args(String s){
@@ -161,40 +163,43 @@ public class ServerTask extends RecursiveTask {
             for(Byte b : hw) {
                 secret += b.intValue();
             }
-            out.println("" + secret);
+            println("" + secret);
             String user = a;
             int response = server.login(user, secret);
 
             switch (response){
                 case 1:
                     if(cNew){
-                        out.println("account exists");
+                        println("account exists");
                         break;
                     }
-                    out.println("welcome " + user);
-                    out.println("please enter your password");
+                    println("welcome " + user);
+                    println("please enter your password");
                     for(int i = 0; i < 2; i++) {
                         String password = new Scanner(System.in).nextLine();
                         if ((account = server.verifyUser(user, password)) != null) {
-                            Command.user = account.getName();
-                            break;
+                           login = "welcome";
+                           cmd.lockedMode = false;
+                           break;
                         } else {
-                            out.println("wrong password please try again");
+                            println("wrong password please try again");
                         }
                     }
                     break;
                 case 0:
-                    out.println("welome new user " + user);
-                    out.println("enter a password to use ");
+                    println("welome new user " + user);
+                    println("enter a password to use ");
                     String password = new Scanner(System.in).nextLine();
                     server.update(user, password);
                     account = server.verifyUser(user, password);
-                    Command.user = account.getName();
+                    login = "welcome";
+                    cmd.lockedMode = false;
                     break;
                 case 2:
-                    out.println("dont worry but you are not allowed to login");
+                    println("dont worry but you are not allowed to login");
                     break;
-                case -1: out.println("Exception");
+                case -1:
+                    println("Exception");
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -207,18 +212,19 @@ public class ServerTask extends RecursiveTask {
 
     private void view(String path){
         connection = new TCP();
+        connection.setHost(HOST);
         try {
-            server.view(RmiClient.acc, path);
+            server.view(RmiClient.account, path);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        out.println(path);
+        println(path);
         return;
     }
 
     private void delete(){
         try {
-            server.delete(RmiClient.acc);
+            server.delete(RmiClient.account);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -235,11 +241,11 @@ public class ServerTask extends RecursiveTask {
     private void open(String a){
         try {
             String path = a;
-            AccountIntf acc = server.open(RmiClient.acc, path);
+            AccountIntf acc = server.open(RmiClient.account, path);
             if(acc != null) {
-                RmiClient.acc = acc;
+                RmiClient.account = acc;
             }else{
-                out.println("file exists under private access");
+                println("file exists under private access");
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -248,7 +254,7 @@ public class ServerTask extends RecursiveTask {
 
     private void close(){
         try {
-            server.close(RmiClient.acc);
+            server.close(RmiClient.account);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -260,9 +266,9 @@ public class ServerTask extends RecursiveTask {
 
     private void list(){
         try {
-            String[] list = server.list(RmiClient.acc);
+            String[] list = server.list(RmiClient.account);
             for(String s : list){
-                out.println(s);
+                println(s);
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -271,27 +277,14 @@ public class ServerTask extends RecursiveTask {
 
     private void logout(){
         try {
-            if(RmiClient.acc != null) {
-                server.logout(RmiClient.acc);
-                RmiClient.acc = null;
+            if(RmiClient.account != null) {
+                server.logout(RmiClient.account);
+                RmiClient.account = null;
             }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        Command.user =  "";
-        Command.lockedMode = true;
-    }
-
-    private void render(){
-        int HEIGHT = (int) Math.pow(2, 4);
-        int WIDTH = (int) Math.pow(2, 7);
-        out.println("");
-        for(int j = 0; j < HEIGHT; j++){
-            for(int i = 0; i < WIDTH; i++){
-                out.print("x");
-            }
-            out.println("");
-        }
+        cmd.lockedMode = true;
     }
 
     private static String getString(TCP connection){
@@ -310,34 +303,48 @@ public class ServerTask extends RecursiveTask {
         return ret;
     }
 
+    /**
+     * Kollar om interna utskrifter är tillåtna
+     * @param s
+     */
+    private void println(String s){
+        if(out){
+            cmd.out.println(s);
+        }
+    }
+
+    /**
+     * Uppgifter som tar lång tid hanteras här
+     * Returvärdet måste vara unikt för varje typ av uppgift dvs om det är en login uppgift så gers returvärdet
+     * @AccountIntf
+     * Om uppgiften inte returnerat inom en sekund tappas kontrollen över tråden
+     * @return
+     */
     protected Object compute(){
         //TODO: Long-running async tasks can go here
-        Object ret = null;
+        //Default resultat
+        Object res = null;
+        //Skriva till en fil på servern
         if(bufferedWrite) {
-            /*try {
-                condition.await(1000, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
             while (handle.peek() != null) {
                 try {
-                    server.write(RmiClient.acc, handle.poll());
-                    server.write(RmiClient.acc, " ");
+                    server.write(RmiClient.account, handle.poll());
+                    server.write(RmiClient.account, " ");
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
             }
             bufferedWrite = false;
-        }if(Command.lockedMode) {
-            ret = account;
+        //Login åtgärd som lyckats
+        }if(login.equals("welcome")) {
+            res = account;
+        //TCP åtgärd returvärde String
         }if(connection != null){
             connection.start();
-            out.println("getting string");
-            ret = getString(connection);
+            println("getting content");
+            res = getString(connection);
         }
-        if(ret == null){
-            ret = "nothing to do";
-        }
-        return ret;
+        //Resultat returneras efter en lyckad bearbetning
+        return res;
     }
 }

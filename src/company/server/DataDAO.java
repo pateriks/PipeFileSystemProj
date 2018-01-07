@@ -53,7 +53,7 @@ public class DataDAO {
         try {
             EntityManager em = beginTransaction();
             try {
-                return em.createNamedQuery("findItemByPath", Account.class).
+                return em.createNamedQuery("findAccountByPath", Account.class).
                         setParameter("sPath", sPath).getSingleResult();
             } catch (NoResultException noSuchAccount) {
                 return null;

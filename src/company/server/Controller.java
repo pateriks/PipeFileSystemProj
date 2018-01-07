@@ -14,7 +14,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     //Database object
     DataDAO db = new DataDAO();
     //Core object
-    PipeServer server = null;
+    PipeServer core = null;
 
     //Non argument construct used outside of package
     protected Controller() throws RemoteException {
@@ -22,12 +22,12 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
     }
     //Vem är det som har kontroll
     protected void init(PipeServer server){
-        this.server = server;
+        this.core = server;
     }
 
     @Override
     public String getMessage() throws RemoteException {
-        return server.getMessage();
+        return core.getMessage();
     }
 
     @Override
@@ -42,39 +42,57 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
 
     @Override
     public boolean creat() throws RemoteException {
-        return server.creat("test");
+        return core.creat("root");
     }
 
     @Override
     public boolean creat(String path) throws RemoteException {
-        return server.creat(path);
+        return core.creat(path);
     }
 
+    /**
+     * Raderar alla öppna filer kopplade till givet Account
+     * @param acc
+     * @return
+     */
     @Override
     public boolean delete(AccountIntf acc){
         try {
-            server.multiDelete(db.findAccountByName(acc.getId(), true).getUser());
+            core.multiDelete(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         return true;
     }
 
+    /**
+     * Raderar fil med given path
+     * @param path
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public boolean delete(String path) throws RemoteException {
-        server.delete(path);
+        core.delete(path);
         return true;
     }
 
+    /**
+     * Använder satta rättigheter för en fil för att antingen ge tillåtelse att radera innehåll i filen
+     * och ge möjlighet för giver Account att skriva nånting nytt till filen
+     * @param acc
+     * @param path
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public AccountIntf open(AccountIntf acc, String path) throws RemoteException {
         Item it = new Item(path);
         Thread t = new Thread(()->{
             db.persistItem(it);
         });
-
         Account account = db.findAccountByName(acc.getId(), false);
-        int lean = server.open(path, account);
+        int lean = core.open(path, account);
         System.out.println("Lean: " + lean);
         if(lean == 0) {
             Item item = null;
@@ -97,7 +115,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                     throw new NullPointerException("no item");
                 }else{
                     if(item.getPermissions().equals("public")) {
-                        server.open(item, account);
+                        core.open(item, account);
                     }else{
                         return null;
                     }
@@ -110,7 +128,7 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
                 try {
                     t.join();
                 } catch (InterruptedException e1) {
-                    e1.printStackTrace();
+                    //e1.printStackTrace();
                 }
                 account = db.findAccountByName(acc.getId(), false);
                 Set h = account.getItem();
@@ -123,9 +141,9 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
 
                 account.setItem(h);
                 db.commit();
-                server.open(it, account);
+                core.open(it, account);
             }catch (RollbackException e){
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }else if(lean == 2){
             //everything is fine
@@ -133,26 +151,29 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         return account;
     }
 
-    @Override
-    public boolean update(AccountIntf account) throws RemoteException {
-        try {
-            Account upd = db.findAccountByName(account.getId(), false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        db.commit();
-        return true;
-    }
-
+    /**
+     * Updaterar lösenordet till ett användarnamn
+     * Förutsätter att ancändaren vid ett tidigare skede har varit inloggad
+     * @param user
+     * @param pass
+     * @return
+     */
     @Override
     public boolean update(String user, String pass){
         Account account = null;
-        account = server.getAccount(user);
+        account = core.getAccount(user);
         account.getUser().setPassword(pass);
         update(account, pass);
         return true;
     }
 
+    /**
+     * Updaterar lösenordet till en användare och gör lösenordet persistent
+     * metoden kräver ett AccounrIntf som argument för att försäkra om behörighet
+     * @param user
+     * @param pass
+     * @return
+     */
     @Override
     public boolean update(AccountIntf user, String pass){
         Account acc = null;
@@ -163,10 +184,18 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         }
         acc.getUser().setPassword(pass);
         db.commit();
-        server.dispInfo();
+        core.dispInfo();
         return true;
     }
 
+    /**
+     * Aktualiserar ett inloggningsförsök
+     * Metoden är bunden till klienten som loggar in
+     * @param s
+     * @param mac
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public int login(String s, int mac) throws RemoteException {
         List accounts = db.findAccounts(s, true);
@@ -174,11 +203,11 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         try{
             if (accounts.isEmpty()){
                 Account acc = new Account(s);
-                server.addActiveAcc(mac, acc);
+                core.addActiveAcc(mac, acc);
                 db.persistAccount(acc);
                 return 0;
             }else if(accounts.size() == 1){
-                server.addActiveAcc(mac, (Account) accounts.get(0));
+                core.addActiveAcc(mac, (Account) accounts.get(0));
                 return 1;
             }else{
                 return 2;
@@ -189,25 +218,43 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         }
     }
 
+    /**
+     * Verifierar användarnamn till givert lösenord för att de åtkomst till objektet AccountIntf
+     * @param user
+     * @param pass
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public AccountIntf verifyUser(String user, String pass) throws RemoteException {
-        Account loginAcc = server.getAccount(user);
+        Account loginAcc = core.getAccount(user);
         if(loginAcc.verifyUser(pass)){
             return (AccountIntf) loginAcc;
         }
         return null;
     }
 
+    /**
+     * Skriver input till öppna filer till giver account
+     * @param acc
+     * @param input
+     * @return
+     */
     @Override
     public boolean write(AccountIntf acc, String input){
         try {
-            server.multiWrite(db.findAccountByName(acc.getId(), true).getUser(), input);
+            core.multiWrite(db.findAccountByName(acc.getId(), true).getUser(), input);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         return true;
     }
 
+    /**
+     * Söker filer kopplade till giver account
+     * @param acc
+     * @return
+     */
     @Override
     public String [] list (AccountIntf acc){
         Object[] paths = null;
@@ -231,34 +278,56 @@ public class Controller  extends UnicastRemoteObject implements ControllerIntf {
         return ret;
     }
 
+    /**
+     * Ser till att lokalt hanterad data inte längre är aktuell
+     * @param acc
+     * @return
+     */
     @Override
     public boolean logout(AccountIntf acc){
         try {
-            server.multiClose(db.findAccountByName(acc.getId(), true).getUser());
+            core.multiClose(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         return true;
     }
 
+    /**
+     * Hämtar account från databasen och ber kärnan att leverera filen med associerad path
+     * @param acc
+     * @param path
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public boolean view(AccountIntf acc, String path) throws RemoteException {
-        server.view(db.findAccountByName(acc.getId(), true), path);
+        Account account = db.findAccountByName(acc.getId(), true);
+        core.view(account, path);
         return false;
     }
 
+    /**
+     * Stänger alla filer öppna i accountet OBS går ej att använda om samma account är inloggad
+     * på flera ställen på samma maskin
+     * @param acc
+     * @return
+     */
     public boolean close(AccountIntf acc){
         try {
-            server.multiClose(db.findAccountByName(acc.getId(), true).getUser());
+            core.multiClose(db.findAccountByName(acc.getId(), true).getUser());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         return true;
     }
 
-    //Admin - Usage
+    /**
+     * Admin previligerad metod
+     * @return
+     */
     private String [] list (){
-        java.lang.Object[] paths = server.list();
+        java.lang.Object[] paths = core.list();
         String[] ret = new String[paths.length];
         int i = 0;
         for (java.lang.Object p : paths){

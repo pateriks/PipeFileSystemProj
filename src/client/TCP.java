@@ -15,91 +15,38 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
+/**
+ * Klass som skickar och tar emot data till en server
+ * Möjlighet att köras multitrådat eller som en nonblocking modul
+ */
 public class TCP implements Runnable{
     private long idling = 0;
-    protected LinkedList<String> que = new LinkedList<>();
-    SocketChannel sC;
-    Selector selector;
-    String last = "null";
-    LinkedList<String> buffer = new LinkedList<>();
-    boolean done = false;
-    public boolean send = true;
+    private boolean done = false;
+    private boolean send = true;
+    private String HOST = "localhost";
 
+    protected int NO_ATTEMPTS = 2;
+    protected LinkedList<String> sendBuffer = new LinkedList<>();
+    protected LinkedList<String> recBuffer = new LinkedList<>();
+    protected SocketChannel sC;
+    protected Selector selector;
+    protected String last = "null";
+
+    /**
+     * Start metod, startar en ny tråd och sätter upp beroenden
+     */
     protected void start (){
         channelSetup();
         new Thread(this).start();
     }
 
-    @Override
-    public void run() {
-        //System.out.println("ready to work");
-        boolean once = true;
-        while(send) {
-            try {
-                if (selector.select() > 0) {
-                    Set set = selector.selectedKeys();
-                    Iterator iterator = set.iterator();
-                    while (iterator.hasNext()) {
-                        //System.out.println("iterate");
-                        SelectionKey key = (SelectionKey) iterator.next();
-                        iterator.remove();
-                        if (key.isConnectable()) {
-                            processConnect();
-                            //System.out.println("process connect");
-                        }
-                        if (key.isReadable()) {
-                            String msg = processRead(key);
-
-                            if(msg.equals("resend")){
-                                que.push(last);
-                            }else {
-                                if(que.peek() != null){
-                                    que.poll();
-                                }
-                                String [] res = msg.split("#");
-                                for(String s : res) {
-                                    //System.out.println("[Server]: " + s);
-                                    if (s.equals("bye")) {
-                                        done = true;
-                                        //System.out.println("closing");
-                                        que.push("bye");
-                                    }else{
-                                        buffer.push(msg);
-                                    }
-                                }
-                            }
-                        }
-                        if (key.isWritable()) {
-                            if (que.peek() != null) {
-                                last = que.poll();
-                                //System.out.println(last);
-                                send = sendStringToServer(last, key);
-                            }
-                            //System.out.println("process write");
-                        }
-                        if(!send){
-                            break;
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        if (!send) {
-            try {
-                selector.close();
-                sC.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            //System.out.println("terminated successfully");
-        } else {
-            //System.out.println("terminated without close");
-        }
-    }
-
-    private boolean sendStringToServer(String s, SelectionKey key){
+    /**
+     * Skickar en sträng med associerad nyckel
+     * @param s
+     * @param key
+     * @return
+     */
+    protected boolean sendStringToServer(String s, SelectionKey key){
         SocketChannel channel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.wrap(s.getBytes());
         try {
@@ -114,9 +61,12 @@ public class TCP implements Runnable{
         return true;
     }
 
-    private void channelSetup(){
+    /**
+     * Sätter upp nödvändiga beroenden
+     */
+    protected void channelSetup(){
         try {
-            InetAddress hostIP = InetAddress.getByName(RmiClient.HOST);
+            InetAddress hostIP = InetAddress.getByName(HOST);
             selector = Selector.open();
             sC = SocketChannel.open();
             sC.configureBlocking(false);
@@ -128,7 +78,7 @@ public class TCP implements Runnable{
         }
     }
 
-    private void processConnect(){
+    protected void processConnect(){
         try {
             sC.finishConnect();
         } catch (IOException e) {
@@ -150,7 +100,7 @@ public class TCP implements Runnable{
         }
     }
 
-    public static String processRead(SelectionKey key) {
+    protected static String processRead(SelectionKey key) {
         SocketChannel sChannel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         try {
@@ -176,9 +126,85 @@ public class TCP implements Runnable{
     }
 
     public String read(){
-        if(buffer.peek() != null) {
-            return buffer.poll();
+        if(recBuffer.peek() != null) {
+            return recBuffer.poll();
         }
         return "";
+    }
+
+    protected void setHost(String host){
+        HOST = host;
+    }
+
+    /**
+     * Trådbaserad TCP överföring av text
+     * När servern har skickat alla data skickas ett "bye" meddelande
+     */
+    @Override
+    public void run() {
+        //System.out.println("ready to work");
+        while(send) {
+            try {
+                if (selector.select() > 0) {
+                    Set set = selector.selectedKeys();
+                    Iterator iterator = set.iterator();
+                    while (iterator.hasNext()) {
+                        //System.out.println("iterate");
+                        SelectionKey key = (SelectionKey) iterator.next();
+                        iterator.remove();
+                        if (key.isConnectable()) {
+                            processConnect();
+                            //System.out.println("process connect");
+                        }
+                        if (key.isReadable()) {
+                            String msg = processRead(key);
+
+                            if(msg.equals("resend")){
+                                sendBuffer.push(last);
+                            }else {
+                                if(sendBuffer.peek() != null){
+                                    sendBuffer.poll();
+                                }
+                                String [] res = msg.split("#");
+                                for(String s : res) {
+                                    //System.out.println("[Server]: " + s);
+                                    if (s.equals("bye")) {
+                                        done = true;
+                                        //System.out.println("closing");
+                                        sendBuffer.push("bye");
+                                    }else{
+                                        recBuffer.push(msg);
+                                    }
+                                }
+                            }
+                        }
+                        if (key.isWritable()) {
+                            if (sendBuffer.peek() != null) {
+                                last = sendBuffer.poll();
+                                //System.out.println(last);
+                                send = sendStringToServer(last, key);
+                            }
+                            //System.out.println("process write");
+                        }
+                        if(!send){
+                            break;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                //e.printStackTrace();
+            }
+        }
+        if (!send) {
+            try {
+                selector.close();
+                sC.close();
+            } catch (IOException e) {
+                //e.printStackTrace();
+            }
+            //System.out.println("terminated successfully");
+        } else {
+            //System.out.println("terminated without close");
+        }
     }
 }

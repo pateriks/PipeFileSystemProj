@@ -1,5 +1,6 @@
 package client;
 
+import java.rmi.RemoteException;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
@@ -7,15 +8,17 @@ import java.util.concurrent.*;
  * Enkeltrådat användargränssnitt som
  * använder sig av ServerTask för att hantera uppgifter
  */
-public class Command implements Runnable{
-
-    public static boolean lockedMode = true;
-    public static String user = "";
+public class NonBlockingInterpreter implements Runnable{
+    //Command line pixeltäthet
+    final int HEIGHT = (int) Math.pow(2, 4);
+    final int WIDTH = (int) Math.pow(2, 7);
+    //Exekveringsläge
+    public boolean lockedMode = true;
     SafeStandardOut out;
     public ThreadLocal<ForkJoinTask> prevTask = new ThreadLocal<>();
     ConcurrentLinkedQueue<ForkJoinTask> queue;
 
-    public Command (ConcurrentLinkedQueue q, SafeStandardOut o){
+    public NonBlockingInterpreter(ConcurrentLinkedQueue q, SafeStandardOut o){
         queue = q;
         out = o;
     }
@@ -48,13 +51,64 @@ public class Command implements Runnable{
     }
 
     /**
+     * Kallas för nytt kommando från användaren
+     * @return
+     */
+    private String[] readNextLine(){
+        if(!lockedMode) {
+            if(RmiClient.account == null){
+                RmiClient.lock.lock();
+                try {
+                    RmiClient.complete.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                RmiClient.lock.unlock();
+            }
+            try {
+                print(RmiClient.account.getName() + RmiClient.PROMPT);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }else{
+            print(RmiClient.PROMPT);
+        }
+        Scanner UsrIn = new Scanner(System.in);
+        return UsrIn.nextLine().split(" ");
+    }
+
+    /**
+     * Misc
+     * @param s
+     */
+    private void print(String s){
+        out.print(s);
+    }
+
+    /**
+     * Misc
+     * @param s
+     */
+    private void println(String s){
+        out.println(s);
+    }
+
+    /**
+     * Misc
+     */
+    private void println(){
+        out.println("");
+    }
+
+    /**
      * Run metod implementaras som en del av interfacet Runnable
      */
     @Override
     public void run(){
-        Scanner UsrIn = new Scanner(System.in);
-        String [] sQuery = UsrIn.nextLine().split(" ");
-        ServerTask cServerTask = new ServerTask();
+
+        String [] sQuery = readNextLine();
+
+        ServerTask cServerTask = new ServerTask(true, this);
 
         for (String c = hasNext(sQuery); c != null; c = hasNext(sQuery)){
             String a;
@@ -84,12 +138,13 @@ public class Command implements Runnable{
                 out.println(Integer.toString(Thread.activeCount()));
             }
         }
-        out.println("Threads: " + Integer.toString(Thread.activeCount()));
+
         queue.add(ForkJoinPool.commonPool().submit(cServerTask));
+
         RmiClient.lock.lock();
         RmiClient.complete.signal();
         RmiClient.lock.unlock();
-        //Vi tar inte bort element från kön i command
+
         prevTask.set(queue.peek());
         this.run();
     }

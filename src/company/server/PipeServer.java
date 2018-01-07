@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,14 +17,14 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class PipeServer {
-
-    protected static final String MESSAGE = "Hello I am Pipe, how can I help you?";
-    protected static final String ROT = "root/";
     private static final String HOST = "192.168.0.16";
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();
     private HashMap<Integer, Account> activeAcs = new HashMap<>();
     private HashMap <String, Integer> keys = new HashMap<>();
     private HashMap <Integer, String> msgs = new HashMap<>();
+
+    protected static final String MESSAGE = "Hello I am Pipe, how can I help you?";
+    protected static final String ROT = "root/";
 
     public String getMessage() {
         return MESSAGE;
@@ -72,12 +71,19 @@ public class PipeServer {
     protected Boolean mkDir(String s) {
         try {
             Path newDir = Files.createDirectory(Paths.get(s));
-            return true;
-        } catch (FileAlreadyExistsException e) {
-            return false;
-        } catch (IOException e) {
+        } catch (Exception e) {
             return false;
         }
+        return true;
+    }
+
+    protected Boolean mkRoot() {
+        try {
+            Path newDir = Files.createDirectory(Paths.get(ROT));
+        } catch (Exception e){
+            return false;
+        }
+        return true;
     }
 
     protected Boolean delete (String path){
@@ -110,23 +116,12 @@ public class PipeServer {
         }
         return true;
     }
+
     protected boolean open(Item item, Account acc){
         User user = acc.getUser();
         OutputStream t = null;
         String s = item.path;
-        try {
-            t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
-            if (rootMap.containsKey(user.username)) {
-                rootMap.get(user.username).put(s, t);
-            } else {
-                HashMap<String, OutputStream> n = new HashMap<>();
-                n.put(s, t);
-                rootMap.put(user.username, n);
-            }
-            t.write("".getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        addOpenFile(user, s);
         return true;
     }
     protected int open(String s, Account acc) {
@@ -136,37 +131,13 @@ public class PipeServer {
         OutputStream t = null;
         Item item;
         if((item = getItem(acc, s)) != null) {
-            //Are acc the haser
-            try {
-                t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
-                if (rootMap.containsKey(user.username)) {
-                    rootMap.get(user.username).put(s, t);
-                } else {
-                    HashMap<String, OutputStream> n = new HashMap<>();
-                    n.put(s, t);
-                    rootMap.put(user.username, n);
-                }
-                t.write("".getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            //Are account the haser
+            addOpenFile(user, s);
             ret = 1;
         }else if((item = getItem(s)) != null){
             if(item.getPermissions().equals("public")){
                 System.out.println("permission allowed");
-                try {
-                    t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
-                    if (rootMap.containsKey(user.username)) {
-                        rootMap.get(user.username).put(s, t);
-                    } else {
-                        HashMap<String, OutputStream> n = new HashMap<>();
-                        n.put(s, t);
-                        rootMap.put(user.username, n);
-                    }
-                    t.write("".getBytes());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                addOpenFile(user, s);
             }else {
                 System.out.println("permission not allowed");
             }
@@ -237,6 +208,23 @@ public class PipeServer {
             }
             path = path.concat(".txt");
             send.que.push(path);
+        }
+    }
+
+    private void addOpenFile(User user, String s){
+        OutputStream t;
+        try {
+            t = Files.newOutputStream(Paths.get(ROT.concat(s.concat(".txt"))));
+            if (rootMap.containsKey(user.username)) {
+                rootMap.get(user.username).put(s, t);
+            } else {
+                HashMap<String, OutputStream> n = new HashMap<>();
+                n.put(s, t);
+                rootMap.put(user.username, n);
+            }
+            t.write("".getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

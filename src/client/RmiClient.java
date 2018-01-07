@@ -1,8 +1,6 @@
 package client;
 
 import company.common.AccountIntf;
-import company.server.Account;
-import company.server.PipeServer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ForkJoinTask;
@@ -14,12 +12,23 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class RmiClient {
 
-    public final static String HOST = "192.168.0.16";
-    public final static String PROMPT = ">";
-    public static AccountIntf acc = null;
-    public static final Lock lock = new ReentrantLock();
-    public static final Condition complete = lock.newCondition();
+    private final static long ONE_SEC = 1000;
 
+    protected final static String HOST = "192.168.0.16";
+    protected final static String PROMPT = ">";
+
+    protected static final Lock lock = new ReentrantLock();
+    protected static final Condition complete = lock.newCondition();
+
+    public static AccountIntf account = null;
+
+    /**
+     * Program som använder sig utav ett Command UI interface med hjälp av
+     * @NonBlockingInterpreter
+     *
+     * @param args
+     * @throws Exception
+     */
     public static void main(String args[]) throws Exception {
 
         lock.lock();
@@ -27,21 +36,18 @@ public class RmiClient {
         ServerTask.setHost(HOST);
 
         SafeStandardOut out = new SafeStandardOut();
+
         ConcurrentLinkedQueue<ForkJoinTask> taskQ = new ConcurrentLinkedQueue<>();
-        Command cmd = new Command(taskQ, out);
-        Thread t = new Thread(cmd);
-        t.start();
+
+        NonBlockingInterpreter cmd = new NonBlockingInterpreter(taskQ, out);
+
+        cmd.start();
 
         boolean run = true;
 
         while(run) {
 
-            if(acc == null){
-                out.print(PROMPT);
-            }else{
-                out.print(acc.getName() + PROMPT);
-            }
-
+            complete.signal();
             lock.unlock();
             lock.lock();
             complete.await();
@@ -49,18 +55,14 @@ public class RmiClient {
             while(taskQ.peek() != null){
                 Object res;
                 try {
-                    res = taskQ.poll().get(1000, TimeUnit.MILLISECONDS);
+                    res = taskQ.poll().get(ONE_SEC, TimeUnit.MILLISECONDS);
                 }catch (TimeoutException e){
                     res = null;
                 }
                 if(res != null) {
                     if (res instanceof AccountIntf) {
-                        acc = (AccountIntf) res;
-                        if (acc != null) {
-                            cmd.lockedMode = false;
-                        }
-                    } else if (res instanceof String) {
-                        out.println("File content:");
+                        account = (AccountIntf) res;
+                    }else if (res instanceof String) {
                         String s = (String) res;
                         out.println(s);
                     }
