@@ -1,27 +1,18 @@
 package client;
 
-import company.common.AccountIntf;
-
-import java.rmi.Naming;
-import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Enkeltrådat användargränssnitt som
+ * använder sig av ServerTask för att hantera uppgifter
+ */
 public class Command implements Runnable{
-    //Instansierar en standardout för att göra programmet mer läsbart
-    SafeStandardOut out = new SafeStandardOut();
-    //Standard prompt tecken
-    final String PROMPT = ">";
-    final LinkedList<ServerTask> serverTasks = new LinkedList();
 
     public static boolean lockedMode = true;
     public static String user = "";
-    public ThreadLocal<ForkJoinTask> l = new ThreadLocal<>();
-
-
+    SafeStandardOut out;
+    public ThreadLocal<ForkJoinTask> prevTask = new ThreadLocal<>();
     ConcurrentLinkedQueue<ForkJoinTask> queue;
 
     public Command (ConcurrentLinkedQueue q, SafeStandardOut o){
@@ -29,8 +20,10 @@ public class Command implements Runnable{
         out = o;
     }
 
-    //Verktyg högst är satta på toppen
-    //hasNext används för att iterera genom ord i en sträng
+    /**
+     * hasNext används för att iterera genom ord i en sträng
+     * Gör så att String[] får ett list liknande gränssnitt
+     */
     private String hasNext(String[] s){
         if(s[0] == null){
             return null;
@@ -47,13 +40,22 @@ public class Command implements Runnable{
         }
     }
 
+    /**
+     * Metod för att starta användargränssnittet i en egen tråd
+     */
+    public void start(){
+        new Thread(this).start();
+    }
+
+    /**
+     * Run metod implementaras som en del av interfacet Runnable
+     */
+    @Override
     public void run(){
         Scanner UsrIn = new Scanner(System.in);
         String [] sQuery = UsrIn.nextLine().split(" ");
+        ServerTask cServerTask = new ServerTask();
 
-        ServerTask cServerTask = new ServerTask(out);
-        //Delar upp förfrågan i delar
-        //Itererar igenom delarna
         for (String c = hasNext(sQuery); c != null; c = hasNext(sQuery)){
             String a;
             try {
@@ -75,8 +77,8 @@ public class Command implements Runnable{
         }
 
         //Titta om föregående asynkrona uppgift är slutförd
-        if(l.get() != null){
-            ForkJoinTask join = l.get();
+        if(prevTask.get() != null){
+            ForkJoinTask join = prevTask.get();
             if(!join.isDone()){
                 out.println("system slow and threads need maintenance");
                 out.println(Integer.toString(Thread.activeCount()));
@@ -88,7 +90,7 @@ public class Command implements Runnable{
         RmiClient.complete.signal();
         RmiClient.lock.unlock();
         //Vi tar inte bort element från kön i command
-        l.set(queue.peek());
+        prevTask.set(queue.peek());
         this.run();
     }
 }

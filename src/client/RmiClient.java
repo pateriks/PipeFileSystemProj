@@ -13,32 +13,39 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class RmiClient {
+
     public final static String HOST = "192.168.0.16";
+    public final static String PROMPT = ">";
     public static AccountIntf acc = null;
     public static final Lock lock = new ReentrantLock();
     public static final Condition complete = lock.newCondition();
+
     public static void main(String args[]) throws Exception {
+
         lock.lock();
+
+        ServerTask.setHost(HOST);
+
         SafeStandardOut out = new SafeStandardOut();
         ConcurrentLinkedQueue<ForkJoinTask> taskQ = new ConcurrentLinkedQueue<>();
         Command cmd = new Command(taskQ, out);
         Thread t = new Thread(cmd);
         t.start();
 
-        //lock.lock();
-        //complete.signal();
-        //lock.unlock();
-        boolean bool = true;
-        while(bool) {
+        boolean run = true;
+
+        while(run) {
+
             if(acc == null){
-                out.print(cmd.PROMPT);
+                out.print(PROMPT);
             }else{
-                out.print(acc.getName() + cmd.PROMPT);
+                out.print(acc.getName() + PROMPT);
             }
+
             lock.unlock();
             lock.lock();
             complete.await();
-            Thread.sleep(1000);
+
             while(taskQ.peek() != null){
                 Object res;
                 try {
@@ -47,20 +54,19 @@ public class RmiClient {
                     res = null;
                 }
                 if(res != null) {
-                    if (cmd.lockedMode && res instanceof AccountIntf) {
+                    if (res instanceof AccountIntf) {
                         acc = (AccountIntf) res;
                         if (acc != null) {
                             cmd.lockedMode = false;
                         }
-                    } else if (ServerTask.graphics && res instanceof String) {
+                    } else if (res instanceof String) {
                         out.println("File content:");
                         String s = (String) res;
                         out.println(s);
-                        ServerTask.graphics = false;
-                    } else {
                     }
                 }
             }
+
         }
     }
 }
