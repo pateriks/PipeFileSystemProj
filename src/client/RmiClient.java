@@ -51,12 +51,12 @@ public class RmiClient {
             complete.signal();
             lock.unlock();
             lock.lock();
-            complete.await();
+            complete.await(ONE_SEC, TimeUnit.MILLISECONDS);
 
             while(taskQ.peek() != null){
                 Object res;
                 try {
-                    res = taskQ.poll().get(ONE_SEC, TimeUnit.MILLISECONDS);
+                    res = taskQ.poll().get(ONE_SEC*5, TimeUnit.MILLISECONDS);
                 }catch (TimeoutException e){
                     res = null;
                 }
