@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -22,7 +23,7 @@ import java.util.stream.Stream;
  * Hanterar alla operationer som programmet hanterar förutom lokala databas operationer
  */
 public class PipeServer {
-    private static final String HOST = "192.168.0.16";
+    private static final String HOST = "localhost";
     private HashMap<String, HashMap<String, OutputStream>> rootMap = new HashMap<>();
     private HashMap<Integer, Account> activeAcs = new HashMap<>();
     private HashMap <String, Integer> keys = new HashMap<>();
@@ -30,6 +31,10 @@ public class PipeServer {
 
     protected static final String MESSAGE = "Hello I am Pipe, how can I help you?";
     protected static final String ROT = "root/";
+
+    private PipeServer(){
+        this.mkRoot();
+    }
 
     public String getMessage() {
         return MESSAGE;

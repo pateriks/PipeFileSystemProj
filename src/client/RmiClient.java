@@ -14,7 +14,7 @@ public class RmiClient {
 
     private final static long ONE_SEC = 1000;
 
-    protected final static String HOST = "192.168.0.16";
+    protected final static String HOST = "localhost";
     protected final static String PROMPT = ">";
 
     protected static final Lock lock = new ReentrantLock();
