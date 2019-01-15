@@ -8,4 +8,6 @@ Functions:
 
 > Password protected user management
 
-Free to Use, acknowledgement of author is prefered.
+Licence:
+Free to Use
+No Warranty
