@@ -8,6 +8,8 @@ Functions:
 
 > Password protected user management
 
+Note that any commenting in program code is in swedish
+
 Licence:
 Free to Use
 No Warranty
